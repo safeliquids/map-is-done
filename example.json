@@ -14,6 +14,14 @@
             ]
         },
         {
+            "type":"set_gamerules",
+            "gamerules":{
+                "keepInventory":"false",
+                "doFireTick":"true",
+                "spawnRadius":"10"
+            }
+        },
+        {
             "type":"zip",
             "archive_name":"an_example_map_made_by_me.zip"
         }
