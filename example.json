@@ -1,0 +1,27 @@
+{
+    "description":"An example config for a ficticious map",
+    "actions":[
+        {
+            "type":"map_name",
+            "world_name":"An Example Map!",
+            "folder_name":"an_example_map"
+        },
+        {
+            "type":"remove_datapack",
+            "values":[
+                "file/bse-main",
+                "file/development_tools"
+            ]
+        },
+        {
+            "type":"zip",
+            "archive_name":"an_example_map_made_by_me.zip"
+        }
+    ],
+    "important_list":[
+        "This is a list of strings.",
+        "They are probably important information for the mapmaker,",
+        "however, the script will ignore it, same as all unrecognized keys in the config file."
+    ],
+    "another_important_thing":"this will also be ignored."
+}
