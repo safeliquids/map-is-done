@@ -2,15 +2,15 @@
     "description":"An example config for a ficticious map",
     "actions":[
         {
-            "type":"map_name",
+            "type":"set_map_name",
             "world_name":"An Example Map!",
             "folder_name":"an_example_map"
         },
         {
-            "type":"remove_datapack",
-            "values":[
-                "file/bse-main",
-                "file/development_tools"
+            "type":"remove_datapacks",
+            "names":[
+                "bse-main",
+                "development_tools"
             ]
         },
         {
