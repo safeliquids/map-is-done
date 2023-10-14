@@ -1,5 +1,7 @@
 {
     "description":"An example config for a ficticious map",
+    "world":"path/to/world",
+    "output_directory":"path/to/output/directory/",
     "actions":[
         {
             "type":"set_map_name",
