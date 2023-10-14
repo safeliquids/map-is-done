@@ -126,7 +126,7 @@ def extract_config(raw_config: dict) -> dict:
 
 
 if __name__ == "__main__":
-    with open("example.json", "r", encoding="utf-8") as conf_file:
+    with open("examples/example.json", "r", encoding="utf-8") as conf_file:
         raw_config = json.load(conf_file)
     config = extract_config(raw_config)
 

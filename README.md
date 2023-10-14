@@ -23,8 +23,8 @@ review them, and it allows for seamless addition of new functionality.
 change going forward.*
 
 A config file is written in JSON for relative ease of use. An example can
-be seen in the file [`example.json`](example.json). The format has several
-required and optional fields, all other fields are ignored. See example
+be seen in the file [`example.json`](examples/example.json). The format has
+several required and optional fields, all other fields are ignored. See example
 
 ```json
 {
