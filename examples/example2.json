@@ -1,0 +1,36 @@
+{
+    "world":"abcd",
+    "output_directory":"efgh",
+    "actions":[
+        {
+            "type":"remove_files",
+            "warning":"careful with this actin type!",
+            "names":[
+                "level.dat_old",
+                "paper-world.yml"
+            ]
+        },
+        {
+            "type":"remove_player_scores",
+            "player":"safeliquids"
+        },
+        {
+            "type":"remove_player_data",
+            "note": "this type has not parameters,",
+            "notee":"it deletes all data of all players"
+        },
+        {
+            "type":"set_difficulty",
+            "difficulty":"normal"
+        },
+        {
+            "type":"set_default_gamemode",
+            "gamemode":2
+        },
+        {
+            "type":"explode_last_played",
+            "note": "Sets the LastPlayed property in level.dat to a very high number.",
+            "notee":"This action also does not have parameters."
+        }
+    ]
+}
