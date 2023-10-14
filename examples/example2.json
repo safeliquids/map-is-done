@@ -3,14 +3,6 @@
     "output_directory":"efgh",
     "actions":[
         {
-            "type":"remove_files",
-            "warning":"careful with this actin type!",
-            "names":[
-                "level.dat_old",
-                "paper-world.yml"
-            ]
-        },
-        {
             "type":"remove_player_scores",
             "player":"safeliquids"
         },

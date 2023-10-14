@@ -10,7 +10,6 @@ class Registry:
         "remove_datapacks",
         "zip",
         "set_gamerules",
-        "remove_files",
         "remove_player_scores",
         "remove_player_data",
         "set_difficulty",
@@ -53,10 +52,6 @@ class Registry:
                     if not isinstance(rule, str) or not isinstance(value, str):
                         raise ValueError(
                             f"gamerules and their values must be strings")
-
-            case "remove_files":
-                names = action.get("names")
-                self._must_be_list_of_strings(names, "names")
 
             case "remove_player_scores":
                 name = action.get("player")

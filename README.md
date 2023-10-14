@@ -81,25 +81,18 @@ A list of implemented action types follows:
     in the configured output directory. Parameters:
     - `"archive_name"` - name of the resulting archive.
 
-5. `"remove_files"`
-
-    Removes files or directories from the world directory. Since this action
-    can be used to remove an arbitrary file, it should be used very carefully.
-    Parameters:
-    - `"names"` - list of paths to objects that should be removed
-
-6. `"remove_player_scores"`
+5. `"remove_player_scores"`
 
     Resets all scoreboard scores of a given player. Parameters:
     - `"player"` - name of the player whose scores should be reset
 
-7. `"remove_player_data"`
+6. `"remove_player_data"`
 
     Removes all data from the `playerdata`, `advancements` and `stats`
     subdirectories, and the `Player` element of `level.dat`. The mentioned
     subdirectories are also removed, since they would contain no data.
 
-8. `"set_difficulty"`
+7. `"set_difficulty"`
 
     Sets the world difficulty. Parameters:
     - `"difficulty"` - the numeric or string representation of the desired
@@ -111,7 +104,7 @@ A list of implemented action types follows:
       |       2 | normal   |
       |       3 | hard     |
 
-9. `"set_default_gamemode"`
+8. `"set_default_gamemode"`
 
     Sets the default gamemode in `level.dat`. Newly joining players will spawn
     in this gamemode.
@@ -124,7 +117,7 @@ A list of implemented action types follows:
       |       2 | adventure |
       |       3 | spectator |
 
-10. `"explode_last_played"`
+9. `"explode_last_played"`
 
     Sets the `LastPlayed` property in `level.dat` to a very high number, so that
     the map, when installed in singleplayer, appears at the top of the world list
