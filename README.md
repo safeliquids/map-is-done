@@ -77,6 +77,48 @@ A list of implemented action types follows:
   in the configured output directory. Parameters:
     - `"archive_name"` - name of the resulting archive.
 
+5. `"remove_files"`
+  Removes files or directories from the world directory. Since this action
+  can be used to remove an arbitrary file, it should be used very carefully.
+  Parameters:
+    - `"names"` - list of paths to objects that should be removed
+
+6. `"remove_player_scores"`
+  Resets all scoreboard scores of a given player. Parameters:
+    - `"player"` - name of the player whose scores should be reset
+
+7. `"remove_player_data"`
+  Removes all data from the `playerdata`, `advancements` and `stats`
+  subdirectories, and the `Player` element of `level.dat`. The mentioned
+  subdirectories are also removed, since they would contain no data.
+
+8. `"set_difficulty"`
+  Sets the world difficulty. Parameters:
+    - `"difficulty"` - the numeric or string representation of the desired
+      difficulty. Allowed values are in a table below
+      | Numeric | String   |
+      |     --: | :--      |
+      |       0 | peaceful |
+      |       1 | easy     |
+      |       2 | normal   |
+      |       3 | hard     |
+
+9. `"set_default_gamemode"`
+  Sets the default gamemode in `level.dat`. Newly joining players will spawn in this gamemode.
+    - `"gamemode"` - the intended gamemode. Similar to difficulty, it can be a numeric
+      or string representation. Allowed values are
+      | Numeric | String    |
+      |     --: | :--       |
+      |       0 | survival  |
+      |       1 | creative  |
+      |       2 | adventure |
+      |       3 | spectator |
+
+10. `"explode_last_played"`
+  Sets the `LastPlayed` property in `level.dat` to a very high number, so that
+  the map, when installed in singleplayer, appears at the top of the world list
+  before it is loaded for the first time.
+
 *Note: as of current, the program only verifies, that each action is of a
 valid type and that it has appropriate arguments for that type.
-More action types will be added.*
+More action types may be added later.*
