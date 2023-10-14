@@ -1,3 +1,4 @@
+import argparse as ap
 import json
 from typing import Any
 
@@ -126,7 +127,15 @@ def extract_config(raw_config: dict) -> dict:
 
 
 if __name__ == "__main__":
-    with open("examples/example.json", "r", encoding="utf-8") as conf_file:
+    argument_parser = ap.ArgumentParser(
+        description="A data-driven tool for getting Minecraft maps ready for release.")
+    argument_parser.add_argument(
+        "--json", action="store", type=str, required=True,
+        metavar="<path/to/config.json>",
+        help="use this configuration file in json format")
+    args = argument_parser.parse_args()
+
+    with open(args.json, "r", encoding="utf-8") as conf_file:
         raw_config = json.load(conf_file)
     config = extract_config(raw_config)
 
