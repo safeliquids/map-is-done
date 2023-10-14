@@ -55,45 +55,53 @@ depending on the type. In the above example, there is one action of type
 A list of implemented action types follows:
 
 1. `"set_map_name"`
-  Changes the world name in `level.dat` and the name of the world folder.
-  Parameters are
+
+    Changes the world name in `level.dat` and the name of the world folder.
+    Parameters are
     - `"world_name"` - the new world name
     - `"folder_name"` - the new world folder name
 
 2. `"remove_datapacks"`
-  Removes specified data packs from the `"datapacks"` subdirectory and from
-  `"level.dat"`.
+
+    Removes specified data packs from the `"datapacks"` subdirectory and from
+    `"level.dat"`.
     - `"names"` - list of data pack names to be removed; must be strings
 
 3. `"set_gamerules"`
-  Changes values of game rules. Parameters are
+
+    Changes values of game rules. Parameters are
     - `"gamerules"` - a compound holding a pair of rule:value for each gamerule
-    to change. Both names and values must be strings, however, it is not
-    verified, that each name is an existing gamerule, nor is it checked if
-    supplied values are appropriate for the gamerule.
+      to change. Both names and values must be strings, however, it is not
+      verified, that each name is an existing gamerule, nor is it checked if
+      supplied values are appropriate for the gamerule.
 
 4. `"zip"`
-  After all changes are done, compress the world in a zip archive and place it
-  in the configured output directory. Parameters:
+
+    After all changes are done, compress the world in a zip archive and place it
+    in the configured output directory. Parameters:
     - `"archive_name"` - name of the resulting archive.
 
 5. `"remove_files"`
-  Removes files or directories from the world directory. Since this action
-  can be used to remove an arbitrary file, it should be used very carefully.
-  Parameters:
+
+    Removes files or directories from the world directory. Since this action
+    can be used to remove an arbitrary file, it should be used very carefully.
+    Parameters:
     - `"names"` - list of paths to objects that should be removed
 
 6. `"remove_player_scores"`
-  Resets all scoreboard scores of a given player. Parameters:
+
+    Resets all scoreboard scores of a given player. Parameters:
     - `"player"` - name of the player whose scores should be reset
 
 7. `"remove_player_data"`
-  Removes all data from the `playerdata`, `advancements` and `stats`
-  subdirectories, and the `Player` element of `level.dat`. The mentioned
-  subdirectories are also removed, since they would contain no data.
+
+    Removes all data from the `playerdata`, `advancements` and `stats`
+    subdirectories, and the `Player` element of `level.dat`. The mentioned
+    subdirectories are also removed, since they would contain no data.
 
 8. `"set_difficulty"`
-  Sets the world difficulty. Parameters:
+
+    Sets the world difficulty. Parameters:
     - `"difficulty"` - the numeric or string representation of the desired
       difficulty. Allowed values are in a table below
       | Numeric | String   |
@@ -104,7 +112,9 @@ A list of implemented action types follows:
       |       3 | hard     |
 
 9. `"set_default_gamemode"`
-  Sets the default gamemode in `level.dat`. Newly joining players will spawn in this gamemode.
+
+    Sets the default gamemode in `level.dat`. Newly joining players will spawn
+    in this gamemode.
     - `"gamemode"` - the intended gamemode. Similar to difficulty, it can be a numeric
       or string representation. Allowed values are
       | Numeric | String    |
@@ -115,9 +125,10 @@ A list of implemented action types follows:
       |       3 | spectator |
 
 10. `"explode_last_played"`
-  Sets the `LastPlayed` property in `level.dat` to a very high number, so that
-  the map, when installed in singleplayer, appears at the top of the world list
-  before it is loaded for the first time.
+
+    Sets the `LastPlayed` property in `level.dat` to a very high number, so that
+    the map, when installed in singleplayer, appears at the top of the world list
+    before it is loaded for the first time.
 
 *Note: as of current, the program only verifies, that each action is of a
 valid type and that it has appropriate arguments for that type.
