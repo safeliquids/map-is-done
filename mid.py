@@ -22,10 +22,7 @@ class Registry:
         "remove_vanilla_garbage"
     ]
 
-    def __init__(self, original_world_folder: PathLike, output_directory: PathLike):
-        self.original_world_folder = original_world_folder
-        self.output_directory = output_directory
-
+    def __init__(self):
         self.additional_files = []
         self.world_name = None
         self.world_folder_name = None
@@ -164,6 +161,11 @@ class Registry:
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]
         self.files_to_remove += ["datapacks/" + n for n in names]
+
+
+def convert(registry: Registry, world: PathLike,
+            output_directory: PathLike, temp_directory: PathLike):
+    raise NotImplementedError("operator is not implemented")
 
 
 def extract_config(raw_config: dict) -> dict:
