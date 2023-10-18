@@ -3,6 +3,8 @@ import json
 from os import PathLike
 from typing import Any
 
+import nbtlib
+
 
 class Registry:
     """registers actions and verifies, if they are supported"""
@@ -29,13 +31,11 @@ class Registry:
         self.world_folder_name = None
         self.archive_name = None
 
-        self.should_remove_player_data = False
         self.reset_scores_of_players = []
         self.datapacks_to_remove = []
         self.level_dat_modifications = {}
-        self.should_remove_bukkit_version = False
-        self.should_remove_server_brands = False
-
+        self.level_dat_removals = []
+        
         self.files_to_remove = []
 
     @classmethod
@@ -92,8 +92,8 @@ class Registry:
                 self.reset_scores_of_players += name
 
             case "remove_player_data":
-                self.should_remove_player_data = True
                 self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
+                self.level_dat_removals.append(nbtlib.Path("Player"))
 
             case "set_difficulty":
                 d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
@@ -137,11 +137,11 @@ class Registry:
 
             case "remove_paper_garbage":
                 self._remove_datapacks_inner(["bukkit"])
-                self.should_remove_bukkit_version = True
+                self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
 
             case "remove_vanilla_garbage":
-                self.should_remove_server_brands = True
                 self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
+                self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
 
             case _:
                 raise ValueError(
