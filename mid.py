@@ -33,6 +33,8 @@ class Registry:
         self.reset_scores_of_players = []
         self.datapacks_to_remove = []
         self.level_dat_modifications = {}
+        self.should_remove_bukkit_version = False
+        self.should_remove_server_brands = False
 
         self.files_to_remove = []
 
@@ -134,10 +136,12 @@ class Registry:
                 self.level_dat_modifications["LastPlayed"] = 9_223_372_036_854_775_807
 
             case "remove_paper_garbage":
-                pass
+                self._remove_datapacks_inner(["bukkit"])
+                self.should_remove_bukkit_version = True
 
             case "remove_vanilla_garbage":
-                pass
+                self.should_remove_server_brands = True
+                self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
 
             case _:
                 raise ValueError(
