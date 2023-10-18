@@ -14,7 +14,9 @@ class Registry:
         "remove_player_data",
         "set_difficulty",
         "set_default_gamemode",
-        "explode_last_played"
+        "explode_last_played",
+        "remove_paper_garbage",
+        "remove_vanilla_garbage"
     ]
 
     def supports(self, action_type: str) -> bool:
@@ -88,6 +90,12 @@ class Registry:
 
             case "explode_last_played":
                 # long max: 9_223_372_036_854_775_807
+                pass
+
+            case "remove_paper_garbage":
+                pass
+
+            case "remove_vanilla_garbage":
                 pass
 
             case _:
