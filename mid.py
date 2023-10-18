@@ -64,9 +64,7 @@ class Registry:
             case "remove_datapacks":
                 names = action.get("names")
                 self._must_be_list_of_strings(names, "names")
-                
-                self.datapacks_to_remove += ["file/" + n for n in names]
-                self.files_to_remove += ["datapacks/" + n for n in names]
+                self._remove_datapacks_inner(names)
 
             case "zip":
                 archive_name = action.get("archive_name")
@@ -158,6 +156,10 @@ class Registry:
             raise ValueError(f"{name} must be a list of strings")
         if not all(map(lambda x: isinstance(x, str), something)):
             raise ValueError(f"elements of {name} must be strings")
+    
+    def _remove_datapacks_inner(self, names):
+        self.datapacks_to_remove += ["file/" + n for n in names]
+        self.files_to_remove += ["datapacks/" + n for n in names]
 
 
 def extract_config(raw_config: dict) -> dict:
