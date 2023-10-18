@@ -1,5 +1,6 @@
 import argparse as ap
 import json
+from os import PathLike
 from typing import Any
 
 
@@ -17,8 +18,25 @@ class Registry:
         "explode_last_played"
     ]
 
-    def supports(self, action_type: str) -> bool:
-        return action_type in self.supported_actions
+    def __init__(self, original_world_folder: PathLike, output_directory: PathLike):
+        self.original_world_folder = original_world_folder
+        self.output_directory = output_directory
+
+        self.additional_files = []
+        self.world_name = None
+        self.world_folder_name = None
+        self.archive_name = None
+
+        self.should_remove_player_data = False
+        self.reset_scores_of_players = []
+        self.datapacks_to_remove = []
+        self.level_dat_modifications = {}
+
+        self.files_to_remove = []
+
+    @classmethod
+    def supports(cls, action_type: str) -> bool:
+        return action_type in cls.supported_actions
 
     def register(self, action: dict):
         """registers an action in json format
@@ -27,7 +45,9 @@ class Registry:
 
         In general, additional fields of the action definitioin (and, by
         extention, the validity of a given action definition,) depend on the
-        actino type."""
+        actino type.
+        
+        Additional relevant data is stored in this object."""
         action_type = action["type"]
         match action_type:
             case "set_map_name":
@@ -35,14 +55,22 @@ class Registry:
                 self._must_be_string(world_name, "world_name")
                 folder_name = action.get("folder_name")
                 self._must_be_string(folder_name, "folder_name")
+                
+                self.world_name = world_name
+                self.world_folder_name = folder_name
 
             case "remove_datapacks":
                 names = action.get("names")
                 self._must_be_list_of_strings(names, "names")
+                
+                self.datapacks_to_remove += ["file/" + n for n in names]
+                self.files_to_remove += ["datapacks/" + n for n in names]
 
             case "zip":
                 archive_name = action.get("archive_name")
                 self._must_be_string(archive_name, "archive_name")
+                
+                self.archive_name = archive_name
 
             case "set_gamerules":
                 gamerules = action.get("gamerules")
@@ -52,43 +80,58 @@ class Registry:
                     if not isinstance(rule, str) or not isinstance(value, str):
                         raise ValueError(
                             f"gamerules and their values must be strings")
+                
+                self.level_dat_modifications |= {"gamerules":gamerules}
 
             case "remove_player_scores":
                 name = action.get("player")
                 self._must_be_string(name, "playername")
+                
+                self.reset_scores_of_players += name
 
             case "remove_player_data":
-                pass
+                self.should_remove_player_data = True
+                self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
 
             case "set_difficulty":
+                d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
                 difficulty = action.get("difficulty")
                 if isinstance(difficulty, int):
                     if difficulty < 0 or difficulty > 3:
                         raise ValueError(
                             "difficulty must be a string or between 0 and 3 inclusive.")
+                    numerical_difficulty = difficulty
                 elif isinstance(difficulty, str):
-                    if difficulty not in ["peaceful", "easy", "normal", "hard"]:
+                    if difficulty not in d:
                         raise ValueError(
                             'difficulty must be a number or one of "peaceful", "easy", "normal", "hard".')
+                    numerical_difficulty = d[difficulty]
                 else:
                     raise ValueError("difficulty must be a string or number")
+                
+                self.level_dat_modifications["Difficulty"] = numerical_difficulty
 
             case "set_default_gamemode":
+                g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
                 gamemode = action.get("gamemode")
                 if isinstance(gamemode, int):
                     if gamemode < 0 or gamemode > 3:
                         raise ValueError(
                             "gamemode must be a string or between 0 and 3 inclusive.")
+                    numerical_gamemode = gamemode
                 elif isinstance(gamemode, str):
-                    if gamemode not in ["survival", "cretive", "adventure", "spectator"]:
+                    if gamemode not in g:
                         raise ValueError(
                             "gamemode must be a number or one of 'survival', 'creative', 'adventure' and 'spectator'.")
+                    numerical_gamemode = g[gamemode]
                 else:
                     raise ValueError("gamemode must be a string or number")
+                
+                self.level_dat_modifications["GameType"] = numerical_gamemode
 
             case "explode_last_played":
                 # long max: 9_223_372_036_854_775_807
-                pass
+                self.level_dat_modifications["LastPlayed"] = 9_223_372_036_854_775_807
 
             case _:
                 raise ValueError(
