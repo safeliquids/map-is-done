@@ -123,6 +123,21 @@ A list of implemented action types follows:
     the map, when installed in singleplayer, appears at the top of the world list
     before it is loaded for the first time.
 
+10. `"remove_paper_garbage"`
+
+    Performs various cleanup of information that Paper uses but is irrelevant
+    to the finished map. That includes
+    - `paper-world.yml`
+    - datapack `file/bukkit`
+    - remove `BukkitVersion` field in `level.dat`
+
+11. `"remove_vanilla_garbage"`
+
+    Performs various cleanup of information normally present in the world, but
+    that are irrelevant to the finished map. That includes
+    - `level.dat_old`, `session.lock`, `uid.dat` files
+    - `ServerBrands` field in `level.dat`
+    
 *Note: as of current, the program only verifies, that each action is of a
 valid type and that it has appropriate arguments for that type.
 More action types may be added later.*

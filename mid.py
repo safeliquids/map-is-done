@@ -15,7 +15,9 @@ class Registry:
         "remove_player_data",
         "set_difficulty",
         "set_default_gamemode",
-        "explode_last_played"
+        "explode_last_played",
+        "remove_paper_garbage",
+        "remove_vanilla_garbage"
     ]
 
     def __init__(self, original_world_folder: PathLike, output_directory: PathLike):
@@ -132,6 +134,12 @@ class Registry:
             case "explode_last_played":
                 # long max: 9_223_372_036_854_775_807
                 self.level_dat_modifications["LastPlayed"] = 9_223_372_036_854_775_807
+
+            case "remove_paper_garbage":
+                pass
+
+            case "remove_vanilla_garbage":
+                pass
 
             case _:
                 raise ValueError(
