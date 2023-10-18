@@ -1,7 +1,11 @@
 import argparse as ap
 import json
 from os import PathLike
+import pathlib as pl
+import shutil
+import time
 from typing import Any
+import zipfile as zf
 
 import nbtlib
 
@@ -80,7 +84,7 @@ class Registry:
                         raise ValueError(
                             f"gamerules and their values must be strings")
                 
-                self.level_dat_modifications |= {"gamerules":gamerules}
+                self.level_dat_modifications |= {"GameRules":gamerules}
 
             case "remove_player_scores":
                 name = action.get("player")
@@ -163,10 +167,126 @@ class Registry:
         self.files_to_remove += ["datapacks/" + n for n in names]
 
 
+def _general_remove(path: PathLike):
+    """delete the file pointed to by paty.
+    IF path is a directory, first recursively delete all it's children and then
+    remove it."""
+    if not path.is_dir():
+        path.unlink(missing_ok=True)
+        return
+    for child in path.iterdir():
+        _general_remove(child)
+    path.rmdir()
+
+
+def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
+    if source.is_file():
+        archive.write(source, path)
+    elif source.is_dir():
+        archive.mkdir(path)
+        for child in source.iterdir():
+            _add_something_to_archive(child, archive, path + "/" + child.name)
+    else:
+        raise ValueError("cannot add %s to archive (unsupported type)" % str(source))
+
+
+def _zip_directory(dir_path: pl.Path, target: pl.Path, replacement_name: str | None = None):
+    """compress given directory into a zip archive"""
+    with zf.ZipFile(target, mode="w", compression=zf.ZIP_DEFLATED, compresslevel=-1) as z:
+        _add_something_to_archive(dir_path, z, dir_path.name if replacement_name is None else replacement_name)
+
+
+def _first_not_none(*stuff):
+    for s in stuff:
+        if s is not None:
+            return s
+
+
 def convert(registry: Registry, world: PathLike,
             output_directory: PathLike, temp_directory: PathLike):
-    raise NotImplementedError("operator is not implemented")
+    original_world = pl.Path(world)
+    output_directory = pl.Path(output_directory)
+    tempdir = pl.Path(temp_directory, str(time.timens()))
 
+    ARCHIVE_NAME = _first_not_none(registry.archive_name, original_world.name)
+    ARCHIVE_FILENAME = ARCHIVE_NAME + ".zip"
+
+    NEW_WORLD_DIRECTORY_NAME = _first_not_none(registry.world_folder_name, original_world.name)
+
+    # step 1: copy to temp directory
+    WORKING_WORLD = tempdir / NEW_WORLD_DIRECTORY_NAME
+    WORKING_WORLD.parent.mkdir(parents=True, exist_ok=True)
+    if WORKING_WORLD.exists():
+        _general_remove(WORKING_WORLD)
+    shutil.copytree(original_world, NEW_WORLD_DIRECTORY_NAME, symlinks=True)
+    # working_world_zip_path = tempdir / ARCHIVE_FILENAME
+    # _zip_directory(original_world, working_world_zip_path, ARCHIVE_NAME)
+    # zf.ZipFile(working_world_zip_path, "r").extractall(WORKING_WORLD.parent)
+    # working_world_zip_path.unlink()
+
+    """
+    stuff that needs doing:
+    - remove player scores
+    - modify level.dat (changes and deletions)
+      - also set the world name, which is separate for some reason
+    - remove datapacks from level.dat, too
+
+    - remove playerdata, stats and advancements
+    - remove some datapacks (directories)
+    - delete garbage files
+
+    - zip the result or only move it to the output
+    """
+
+    # step 2: removing player scores
+    scoreboard_path = WORKING_WORLD / "data" / "scoreboard.dat"
+    if scoreboard_path.is_file() and registry.reset_scores_of_players != []:
+        with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
+            for player in registry.reset_scores_of_players:
+                del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
+    
+    # step 3 and 4: remove things from level.dat, then apply modifications
+    with nbtlib.load(WORKING_WORLD / "level.dat") as level_dat:
+        data = nbtlib.Path('"".Data')
+        
+        # step 3: deletions
+        for item in registry.level_dat_removals:
+            del level_dat[data + item]
+        # well. that was easy!
+
+        # step 4: modifications
+        level_dat[data] |= registry.level_dat_modifications
+        level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
+
+        yeeting_packs = registry.datapacks_to_remove
+        yeeting_pack_indices = {
+            "Enabled":[],
+            "Disabled":[]
+        }
+        for state in ["Enabled", "Disabled"]:
+            for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
+                if pack_name in yeeting_packs:
+                    yeeting_pack_indices[state].append(i)
+            for index in reversed(yeeting_pack_indices[state]):
+                del level_dat[data + nbtlib.Path('DataPacks.%s[%d]' % (state, index))]
+
+    # step 5: remove unwanted files and directories
+    for d in registry.files_to_remove:
+        _general_remove(WORKING_WORLD / d)
+
+    # step 6: move result to output directory
+    if registry.archive_name is not None:
+        archive_path = output_directory / ARCHIVE_FILENAME
+        _general_remove(pl.Path(archive_path))
+        _zip_directory(WORKING_WORLD, archive_path)
+        # TODO: additional files that should go in the archive,
+        # such as a README.
+    else:
+        # move working world to output dir
+        shutil.copytree(WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME, symlinks=True)
+    
+    # _general_remove(WORKING_WORLD)
+        
 
 def extract_config(raw_config: dict) -> dict:
     """Extracts only relevant fields from configuration.
