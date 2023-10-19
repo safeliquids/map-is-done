@@ -245,7 +245,8 @@ def convert(registry: Registry, world: PathLike,
         with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
             for player in registry.reset_scores_of_players:
                 del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
-    
+    print("deleted player data")
+
     # step 3 and 4: remove things from level.dat, then apply modifications
     with nbtlib.load(WORKING_WORLD / "level.dat") as level_dat:
         data = nbtlib.Path('"".Data')
@@ -253,11 +254,14 @@ def convert(registry: Registry, world: PathLike,
         # step 3: deletions
         for item in registry.level_dat_removals:
             del level_dat[data + item]
+            print("deleted '%s' from level.dat" % str(item))
         # well. that was easy!
 
         # step 4: modifications
         level_dat[data] |= registry.level_dat_modifications
+        print("applied modifications to level.dat")
         level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
+        print("changed world name in level.dat")
 
         yeeting_packs = registry.datapacks_to_remove
         yeeting_pack_indices = {
@@ -267,6 +271,8 @@ def convert(registry: Registry, world: PathLike,
         for state in ["Enabled", "Disabled"]:
             for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
                 if pack_name in yeeting_packs:
+                    print("datapack '%s' will be removed from level.dat, it was %"
+                          % (pack_name, state))
                     yeeting_pack_indices[state].append(i)
             for index in reversed(yeeting_pack_indices[state]):
                 del level_dat[data + nbtlib.Path('DataPacks.%s[%d]' % (state, index))]
@@ -274,17 +280,23 @@ def convert(registry: Registry, world: PathLike,
     # step 5: remove unwanted files and directories
     for d in registry.files_to_remove:
         _general_remove(WORKING_WORLD / d)
+        print("deleted %s" % d)
 
     # step 6: move result to output directory
+    output_directory.mkdir(parents=True, exist_ok=True)
     if registry.archive_name is not None:
         archive_path = output_directory / ARCHIVE_FILENAME
         _general_remove(pl.Path(archive_path))
         _zip_directory(WORKING_WORLD, archive_path)
         # TODO: additional files that should go in the archive,
         # such as a README.
+        print("zipped working world at '%s', archive is '%s'"
+              % (WORKING_WORLD, archive_path))
     else:
         # move working world to output dir
         shutil.copytree(WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME, symlinks=True)
+        print("copied working world '%s' to output dir, result is '%s'"
+              % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
     
     # _general_remove(WORKING_WORLD)
         
@@ -323,3 +335,5 @@ if __name__ == "__main__":
     for action in config["actions"]:
         reg.register(action)
     print("=" * 40)
+
+    convert(reg, config["world"], config["output_directory"], ".mid")
