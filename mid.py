@@ -83,8 +83,12 @@ class Registry:
                     if not isinstance(rule, str) or not isinstance(value, str):
                         raise ValueError(
                             f"gamerules and their values must be strings")
-                
-                self.level_dat_modifications |= {"GameRules":gamerules}
+                gamerules_as_nbt_strings = dict(
+                    map(lambda it:(it[0],nbtlib.String(it[1])), gamerules.items()))
+                if "GameRules" not in self.level_dat_modifications:
+                    self.level_dat_modifications["GameRules"] = gamerules_as_nbt_strings
+                else:
+                    self.level_dat_modifications["GameRules"] |= gamerules_as_nbt_strings
 
             case "remove_player_scores":
                 name = action.get("player")
@@ -111,8 +115,7 @@ class Registry:
                     numerical_difficulty = d[difficulty]
                 else:
                     raise ValueError("difficulty must be a string or number")
-                
-                self.level_dat_modifications["Difficulty"] = numerical_difficulty
+                self.level_dat_modifications["Difficulty"] = nbtlib.Int(numerical_difficulty)
 
             case "set_default_gamemode":
                 g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
@@ -129,12 +132,12 @@ class Registry:
                     numerical_gamemode = g[gamemode]
                 else:
                     raise ValueError("gamemode must be a string or number")
-                
-                self.level_dat_modifications["GameType"] = numerical_gamemode
+                self.level_dat_modifications["GameType"] = nbtlib.Int(numerical_gamemode)
 
             case "explode_last_played":
                 # long max: 9_223_372_036_854_775_807
-                self.level_dat_modifications["LastPlayed"] = 9_223_372_036_854_775_807
+                self.level_dat_modifications["LastPlayed"]\
+                    = nbtlib.Long(9_223_372_036_854_775_807)
 
             case "remove_paper_garbage":
                 self._remove_datapacks_inner(["bukkit"])
@@ -260,7 +263,7 @@ def convert(registry: Registry, world: PathLike,
         # well. that was easy!
 
         # step 4: modifications
-        level_dat[data] |= registry.level_dat_modifications
+        level_dat[data].merge(registry.level_dat_modifications)
         print("applied modifications to level.dat")
         level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
         print("changed world name in level.dat")
