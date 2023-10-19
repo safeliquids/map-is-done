@@ -206,7 +206,7 @@ def convert(registry: Registry, world: PathLike,
             output_directory: PathLike, temp_directory: PathLike):
     original_world = pl.Path(world)
     output_directory = pl.Path(output_directory)
-    tempdir = pl.Path(temp_directory, str(time.timens()))
+    tempdir = pl.Path(temp_directory, str(time.time_ns()))
 
     ARCHIVE_NAME = _first_not_none(registry.archive_name, original_world.name)
     ARCHIVE_FILENAME = ARCHIVE_NAME + ".zip"
