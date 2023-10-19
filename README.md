@@ -79,7 +79,7 @@ A list of implemented action types follows:
 
     After all changes are done, compress the world in a zip archive and place it
     in the configured output directory. Parameters:
-    - `"archive_name"` - name of the resulting archive.
+    - `"archive_name"` - name of the resulting archive (withou the .zip extension)
 
 5. `"remove_player_scores"`
 
@@ -137,7 +137,3 @@ A list of implemented action types follows:
     that are irrelevant to the finished map. That includes
     - `level.dat_old`, `session.lock`, `uid.dat` files
     - `ServerBrands` field in `level.dat`
-    
-*Note: as of current, the program only verifies, that each action is of a
-valid type and that it has appropriate arguments for that type.
-More action types may be added later.*
