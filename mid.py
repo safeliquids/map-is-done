@@ -218,7 +218,8 @@ def convert(registry: Registry, world: PathLike,
     WORKING_WORLD.parent.mkdir(parents=True, exist_ok=True)
     if WORKING_WORLD.exists():
         _general_remove(WORKING_WORLD)
-    shutil.copytree(original_world, NEW_WORLD_DIRECTORY_NAME, symlinks=True)
+    shutil.copytree(original_world, WORKING_WORLD, symlinks=True)
+    print("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
     # working_world_zip_path = tempdir / ARCHIVE_FILENAME
     # _zip_directory(original_world, working_world_zip_path, ARCHIVE_NAME)
     # zf.ZipFile(working_world_zip_path, "r").extractall(WORKING_WORLD.parent)
