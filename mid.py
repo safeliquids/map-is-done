@@ -90,7 +90,7 @@ class Registry:
                 name = action.get("player")
                 self._must_be_string(name, "playername")
                 
-                self.reset_scores_of_players += name
+                self.reset_scores_of_players.append(name)
 
             case "remove_player_data":
                 self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
@@ -139,6 +139,7 @@ class Registry:
             case "remove_paper_garbage":
                 self._remove_datapacks_inner(["bukkit"])
                 self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
+                self.files_to_remove.append("paper-world.yml")
 
             case "remove_vanilla_garbage":
                 self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
@@ -244,6 +245,7 @@ def convert(registry: Registry, world: PathLike,
     if scoreboard_path.is_file() and registry.reset_scores_of_players != []:
         with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
             for player in registry.reset_scores_of_players:
+                print("removing scores of player '%s'" % player)
                 del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
     print("deleted player data")
 
