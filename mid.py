@@ -195,7 +195,9 @@ def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
 
 
 def _zip_directory(dir_path: pl.Path, target: pl.Path, replacement_name: str | None = None):
-    """compress given directory into a zip archive"""
+    """compress given directory into a zip archive
+    
+    deprecated"""
     with zf.ZipFile(target, mode="w", compression=zf.ZIP_DEFLATED, compresslevel=-1) as z:
         _add_something_to_archive(dir_path, z, dir_path.name if replacement_name is None else replacement_name)
 
@@ -292,7 +294,11 @@ def convert(registry: Registry, world: PathLike,
     if registry.archive_name is not None:
         archive_path = output_directory / ARCHIVE_FILENAME
         _general_remove(pl.Path(archive_path))
-        _zip_directory(WORKING_WORLD, archive_path)
+        shutil.make_archive(
+            (output_directory/ARCHIVE_NAME).as_posix(), "zip",
+            tempdir, NEW_WORLD_DIRECTORY_NAME)
+        # _zip_directory(WORKING_WORLD, archive_path)
+        
         # TODO: additional files that should go in the archive,
         # such as a README.
         print("zipped working world at '%s', archive is '%s'"
