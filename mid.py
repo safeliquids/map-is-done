@@ -172,15 +172,11 @@ class Registry:
 
 
 def _general_remove(path: PathLike):
-    """delete the file pointed to by paty.
-    IF path is a directory, first recursively delete all it's children and then
-    remove it."""
+    """delete the file or directory pointed to by path"""
     if not path.is_dir():
         path.unlink(missing_ok=True)
-        return
-    for child in path.iterdir():
-        _general_remove(child)
-    path.rmdir()
+    else:
+        shutil.rmtree(path)
 
 
 def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
