@@ -2,7 +2,7 @@
 *Data-driven tool for publishing Minecraft: Java Edition maps.*
 
 This tool is inteneded for people who make custom maps (worlds) for
-Minecraft, the popular video game. When the map is done, there is still 
+Minecraft. When the map is done, there is still 
 unpleasant work left to do, that is having to manually remove various files
 from the world directory, modify NBT files (such as `level.dat`), and more.
 The purpose of this tool is to automate as much as possible of that process,
