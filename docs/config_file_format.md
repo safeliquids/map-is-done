@@ -24,7 +24,9 @@ several required and optional fields, all other fields are ignored. See example
 Required fields are `"world"` which is a path to the world to be modified,
 `"output_directory"` which is a path to a directory where the result of the
 modifications is placed, and `"actions"`, a list of objects, each describing
-a modification to the supplied world.
+a modification to the supplied world. All referenced filesystem paths should
+be absolute or relative to the current working directory (where the script is
+run from.)
 
 ## Actions
 The list may contain any number of actions, and may even be
