@@ -152,8 +152,6 @@ class Registry:
                 raise ValueError(
                     f"action type `{action_type}' is not supported!")
 
-        print(f"registered action of type `{action_type}'")
-
     @classmethod
     def _must_be_string(cls, something: Any, name: str):
         if not isinstance(something, str):
@@ -199,7 +197,7 @@ def _first_not_none(*stuff):
 
 def convert(registry: Registry, world: PathLike,
             output_directory: PathLike, temp_directory: PathLike,
-            clean: bool):
+            clean: bool, verbose: bool):
     original_world = pl.Path(world)
     output_directory = pl.Path(output_directory)
     tempdir = pl.Path(temp_directory, str(time.time_ns()))
@@ -215,16 +213,19 @@ def convert(registry: Registry, world: PathLike,
     if WORKING_WORLD.exists():
         _general_remove(WORKING_WORLD)
     shutil.copytree(original_world, WORKING_WORLD, symlinks=True)
-    print("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
+    if verbose:
+        print("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
 
     # step 2: removing player scores
     scoreboard_path = WORKING_WORLD / "data" / "scoreboard.dat"
     if scoreboard_path.is_file() and registry.reset_scores_of_players != []:
         with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
             for player in registry.reset_scores_of_players:
-                print("removing scores of player '%s'" % player)
+                if verbose:
+                    print("removing scores of player '%s'" % player)
                 del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
-    print("deleted player data")
+    if verbose:
+        print("deleted player data")
 
     # step 3 and 4: remove things from level.dat, then apply modifications
     with nbtlib.load(WORKING_WORLD / "level.dat") as level_dat:
@@ -233,13 +234,16 @@ def convert(registry: Registry, world: PathLike,
         # step 3: deletions
         for item in registry.level_dat_removals:
             del level_dat[data + item]
-            print("deleted '%s' from level.dat" % str(item))
+            if verbose:
+                print("deleted '%s' from level.dat" % str(item))
 
         # step 4: modifications
         level_dat[data].merge(registry.level_dat_modifications)
-        print("applied modifications to level.dat")
+        if verbose:
+            print("applied modifications to level.dat")
         level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
-        print("changed world name in level.dat")
+        if verbose:
+            print("changed world name in level.dat")
 
         yeeting_packs = registry.datapacks_to_remove
         yeeting_pack_indices = {
@@ -249,8 +253,9 @@ def convert(registry: Registry, world: PathLike,
         for state in ["Enabled", "Disabled"]:
             for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
                 if pack_name in yeeting_packs:
-                    print("datapack '%s' will be removed from level.dat, it was %"
-                          % (pack_name, state))
+                    if verbose:
+                        print("datapack '%s' will be removed from level.dat, it was %"
+                              % (pack_name, state))
                     yeeting_pack_indices[state].append(i)
             for index in reversed(yeeting_pack_indices[state]):
                 del level_dat[data + nbtlib.Path('DataPacks.%s[%d]' % (state, index))]
@@ -258,7 +263,8 @@ def convert(registry: Registry, world: PathLike,
     # step 5: remove unwanted files and directories
     for d in registry.files_to_remove:
         _general_remove(WORKING_WORLD / d)
-        print("deleted %s" % d)
+        if verbose:
+            print("deleted %s" % d)
 
     # step 6: move result to output directory
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -268,13 +274,15 @@ def convert(registry: Registry, world: PathLike,
         shutil.make_archive(
             (output_directory/ARCHIVE_NAME).as_posix(), "zip",
             tempdir, NEW_WORLD_DIRECTORY_NAME)
-        print("zipped working world at '%s', archive is '%s'"
-              % (WORKING_WORLD, archive_path))
+        if verbose:
+            print("zipped working world at '%s', archive is '%s'"
+                    % (WORKING_WORLD, archive_path))
     else:
         # move working world to output dir
         shutil.copytree(WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME, symlinks=True)
-        print("copied working world '%s' to output dir, result is '%s'"
-              % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
+        if verbose:
+            print("copied working world '%s' to output dir, result is '%s'"
+                    % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
     
     if clean:
         _general_remove(tempdir)
@@ -301,8 +309,10 @@ if __name__ == "__main__":
         help="use this configuration file in json format")
     argument_parser.add_argument(
         "-c", "--clean", action="store_true",
-        help="delete working copy after result is produced"
-    )
+        help="delete working copy after result is produced")
+    argument_parser.add_argument(
+        "-q", "--quiet", action="store_true",
+        help="do not print progress to console")
     args = argument_parser.parse_args()
 
     with open(args.json, "r", encoding="utf-8") as conf_file:
@@ -312,5 +322,8 @@ if __name__ == "__main__":
     reg = Registry()
     for action in config["actions"]:
         reg.register(action)
+        if not args.quiet:
+            print("registered action of type `%s'" % action["type"])
 
-    convert(reg, config["world"], config["output_directory"], ".mid", args.clean)
+    convert(reg, config["world"], config["output_directory"], ".mid",
+            args.clean, not args.quiet)

@@ -43,8 +43,21 @@ resulting in a structure such as
 |        |  ...
 |  ...
 ```
-When given the `--clean` or `-c` flag, the working world is deleted after the
-result is produced.
+With the `--clean` flag, the working world is deleted after the result is
+produced.
+
+Full usage:
+```console
+> python mid --help
+usage: mid.py [-h] --json <path/to/config.json> [-c] [-q]
+
+options:
+  -h, --help            show this help message and exit
+  --json <path/to/config.json>
+                        use this configuration file in json format
+  -c, --clean           delete working copy after result is produced
+  -q, --quiet           do not print progress to console
+```
 
 ## Config file format
 Information on what modifications the script should do are passed to it in
