@@ -205,7 +205,8 @@ def _first_not_none(*stuff):
 
 
 def convert(registry: Registry, world: PathLike,
-            output_directory: PathLike, temp_directory: PathLike):
+            output_directory: PathLike, temp_directory: PathLike,
+            clean: bool):
     original_world = pl.Path(world)
     output_directory = pl.Path(output_directory)
     tempdir = pl.Path(temp_directory, str(time.time_ns()))
@@ -305,7 +306,8 @@ def convert(registry: Registry, world: PathLike,
         print("copied working world '%s' to output dir, result is '%s'"
               % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
     
-    # _general_remove(WORKING_WORLD)
+    if clean:
+        _general_remove(tempdir)
         
 
 def extract_config(raw_config: dict) -> dict:
@@ -327,20 +329,18 @@ if __name__ == "__main__":
         "--json", action="store", type=str, required=True,
         metavar="<path/to/config.json>",
         help="use this configuration file in json format")
+    argument_parser.add_argument(
+        "-c", "--clean", action="store_true",
+        help="delete working copy after result is produced"
+    )
     args = argument_parser.parse_args()
 
     with open(args.json, "r", encoding="utf-8") as conf_file:
         raw_config = json.load(conf_file)
     config = extract_config(raw_config)
 
-    print("=" * 40)
-    print("resulting config:")
-    print(json.dumps(config, indent=4))
-    print("=" * 40)
-
     reg = Registry()
     for action in config["actions"]:
         reg.register(action)
-    print("=" * 40)
 
-    convert(reg, config["world"], config["output_directory"], ".mid")
+    convert(reg, config["world"], config["output_directory"], ".mid", args.clean)
