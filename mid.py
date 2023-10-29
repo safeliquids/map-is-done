@@ -179,6 +179,7 @@ def _general_remove(path: PathLike):
         shutil.rmtree(path)
 
 
+# this functin will be useful later
 def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
     if source.is_file():
         archive.write(source, path)
@@ -188,14 +189,6 @@ def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
             _add_something_to_archive(child, archive, path + "/" + child.name)
     else:
         raise ValueError("cannot add %s to archive (unsupported type)" % str(source))
-
-
-def _zip_directory(dir_path: pl.Path, target: pl.Path, replacement_name: str | None = None):
-    """compress given directory into a zip archive
-    
-    deprecated"""
-    with zf.ZipFile(target, mode="w", compression=zf.ZIP_DEFLATED, compresslevel=-1) as z:
-        _add_something_to_archive(dir_path, z, dir_path.name if replacement_name is None else replacement_name)
 
 
 def _first_not_none(*stuff):
@@ -223,24 +216,6 @@ def convert(registry: Registry, world: PathLike,
         _general_remove(WORKING_WORLD)
     shutil.copytree(original_world, WORKING_WORLD, symlinks=True)
     print("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
-    # working_world_zip_path = tempdir / ARCHIVE_FILENAME
-    # _zip_directory(original_world, working_world_zip_path, ARCHIVE_NAME)
-    # zf.ZipFile(working_world_zip_path, "r").extractall(WORKING_WORLD.parent)
-    # working_world_zip_path.unlink()
-
-    """
-    stuff that needs doing:
-    - remove player scores
-    - modify level.dat (changes and deletions)
-      - also set the world name, which is separate for some reason
-    - remove datapacks from level.dat, too
-
-    - remove playerdata, stats and advancements
-    - remove some datapacks (directories)
-    - delete garbage files
-
-    - zip the result or only move it to the output
-    """
 
     # step 2: removing player scores
     scoreboard_path = WORKING_WORLD / "data" / "scoreboard.dat"
@@ -259,7 +234,6 @@ def convert(registry: Registry, world: PathLike,
         for item in registry.level_dat_removals:
             del level_dat[data + item]
             print("deleted '%s' from level.dat" % str(item))
-        # well. that was easy!
 
         # step 4: modifications
         level_dat[data].merge(registry.level_dat_modifications)
@@ -294,10 +268,6 @@ def convert(registry: Registry, world: PathLike,
         shutil.make_archive(
             (output_directory/ARCHIVE_NAME).as_posix(), "zip",
             tempdir, NEW_WORLD_DIRECTORY_NAME)
-        # _zip_directory(WORKING_WORLD, archive_path)
-        
-        # TODO: additional files that should go in the archive,
-        # such as a README.
         print("zipped working world at '%s', archive is '%s'"
               % (WORKING_WORLD, archive_path))
     else:
