@@ -28,8 +28,23 @@ Run the script from the command line like so
 > python mid.py --json path/to/config/file.json
 ```
 
-All filesystem paths used in the config file should be absolute or relative to
-the current working directory.
+When given a world, the script first copies it to a temporary directory and
+does all modifications in that copy. The temporary directory is named
+`.mid/<timestamp>` and is created inside the current working directory,
+resulting in a structure such as
+```
+./
+|- .mid
+|  |- 1698233982531529800/
+|     |- my_world/
+|        |- level.dat
+|        |- region/
+|        |- icon.png
+|        |  ...
+|  ...
+```
+When given the `--clean` or `-c` flag, the working world is deleted after the
+result is produced.
 
 ## Config file format
 Information on what modifications the script should do are passed to it in
