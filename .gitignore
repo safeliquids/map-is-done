@@ -1,6 +1,8 @@
 *.code-workspace
 
 .venv/*
+.venv38/*
+.venv310/*
 .vscode/*
 
 b2_release.py
