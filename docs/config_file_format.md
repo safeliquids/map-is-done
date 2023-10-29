@@ -60,7 +60,7 @@ A list of implemented action types follows:
 
     After all changes are done, compress the world in a zip archive and place it
     in the configured output directory. Parameters:
-    - `"archive_name"` - name of the resulting archive (withou the .zip extension)
+    - `"archive_name"` - name of the resulting archive (*without* the .zip extension)
 
 5. `"remove_player_scores"`
 
