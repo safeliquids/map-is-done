@@ -2,32 +2,24 @@
     "description":"An example config for a ficticious map",
     "world":"path/to/world",
     "output_directory":"path/to/output/directory/",
-    "actions":[
-        {
-            "type":"set_map_name",
+    "actions":{
+        "set_map_name":{
             "world_name":"An Example Map!",
             "folder_name":"an_example_map"
         },
-        {
-            "type":"remove_datapacks",
-            "names":[
-                "bse-main",
-                "development_tools"
-            ]
+        "remove_datapacks":[
+            "bse-main",
+            "development_tools"
+        ],
+        "set_gamerules":{
+            "keepInventory":"false",
+            "doFireTick":"true",
+            "spawnRadius":"10"
         },
-        {
-            "type":"set_gamerules",
-            "gamerules":{
-                "keepInventory":"false",
-                "doFireTick":"true",
-                "spawnRadius":"10"
-            }
-        },
-        {
-            "type":"zip",
+        "zip":{
             "archive_name":"an_example_map_made_by_me.zip"
         }
-    ],
+    },
     "important_list":[
         "This is a list of strings.",
         "They are probably important information for the mapmaker,",

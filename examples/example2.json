@@ -1,28 +1,16 @@
 {
     "world":"abcd",
     "output_directory":"efgh",
-    "actions":[
-        {
-            "type":"remove_player_scores",
-            "player":"safeliquids"
-        },
-        {
-            "type":"remove_player_data",
-            "note": "this type has not parameters,",
-            "notee":"it deletes all data of all players"
-        },
-        {
-            "type":"set_difficulty",
-            "difficulty":"normal"
-        },
-        {
-            "type":"set_default_gamemode",
-            "gamemode":2
-        },
-        {
-            "type":"explode_last_played",
-            "note": "Sets the LastPlayed property in level.dat to a very high number.",
-            "notee":"This action also does not have parameters."
+    "actions":{
+        "remove_player_scores":["daniel", "cooler_daniel"],
+        "remove_player_data":true,
+        "set_difficulty":"normal",
+        "set_default_gamemode":2,
+        "explode_last_played":true,
+        "remove_garbage":{
+            "paper":true,
+            "vanilla":true,
+            "fabric":true
         }
-    ]
+    }
 }
