@@ -22,8 +22,7 @@ class Registry:
         "set_difficulty",
         "set_default_gamemode",
         "explode_last_played",
-        "remove_paper_garbage",
-        "remove_vanilla_garbage"
+        "remove_garbage"
     ]
 
     def __init__(self):
@@ -39,70 +38,63 @@ class Registry:
         
         self.files_to_remove = []
 
-    @classmethod
-    def supports(cls, action_type: str) -> bool:
-        return action_type in cls.supported_actions
 
-    def register(self, action: dict):
+    def register_action(self, type: str, argument: str | int | bool | list | dict):
         """registers an action in json format
         raises ValueError if the action type is unsupported or the action
         definition is invalid.
 
-        In general, additional fields of the action definitioin (and, by
-        extention, the validity of a given action definition,) depend on the
+        In general, the value of `argument` (and, by
+        extention, the validity of a given action definition,) depends on the
         actino type.
         
         Additional relevant data is stored in this object."""
-        action_type = action["type"]
-        match action_type:
+        match type:
             case "set_map_name":
-                world_name = action.get("world_name")
+                self._must_be_dict(argument, "set_map_name")
+                world_name = argument.get("world_name")
                 self._must_be_string(world_name, "world_name")
-                folder_name = action.get("folder_name")
+                folder_name = argument.get("folder_name")
                 self._must_be_string(folder_name, "folder_name")
-                
                 self.world_name = world_name
                 self.world_folder_name = folder_name
 
             case "remove_datapacks":
-                names = action.get("names")
-                self._must_be_list_of_strings(names, "names")
-                self._remove_datapacks_inner(names)
+                self._must_be_list_of_strings(argument, "remove_datapacks")
+                self._remove_datapacks_inner(argument)
 
             case "zip":
-                archive_name = action.get("archive_name")
+                self._must_be_dict(argument, "zip")
+                archive_name = argument.get("archive_name")
                 self._must_be_string(archive_name, "archive_name")
-                
                 self.archive_name = archive_name
 
             case "set_gamerules":
-                gamerules = action.get("gamerules")
-                if not isinstance(gamerules, dict):
-                    raise ValueError(f"expected a compound of gamerules")
-                for rule, value in gamerules.items():
+                self._must_be_dict(argument, "set_gamerules")
+                for rule, value in argument.items():
                     if not isinstance(rule, str) or not isinstance(value, str):
                         raise ValueError(
                             f"gamerules and their values must be strings")
                 gamerules_as_nbt_strings = dict(
-                    map(lambda it:(it[0],nbtlib.String(it[1])), gamerules.items()))
+                    map(lambda it:(it[0],nbtlib.String(it[1])), argument.items()))
                 if "GameRules" not in self.level_dat_modifications:
                     self.level_dat_modifications["GameRules"] = gamerules_as_nbt_strings
                 else:
                     self.level_dat_modifications["GameRules"] |= gamerules_as_nbt_strings
 
             case "remove_player_scores":
-                name = action.get("player")
-                self._must_be_string(name, "playername")
-                
-                self.reset_scores_of_players.append(name)
+                self._must_be_list_of_strings(argument, "remove_player_scores")
+                self.reset_scores_of_players += argument
 
             case "remove_player_data":
-                self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
-                self.level_dat_removals.append(nbtlib.Path("Player"))
+                self._must_be_bool(argument, "remove_player_data")
+                if argument:
+                    self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
+                    self.level_dat_removals.append(nbtlib.Path("Player"))
 
             case "set_difficulty":
+                difficulty = argument
                 d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
-                difficulty = action.get("difficulty")
                 if isinstance(difficulty, int):
                     if difficulty < 0 or difficulty > 3:
                         raise ValueError(
@@ -119,7 +111,7 @@ class Registry:
 
             case "set_default_gamemode":
                 g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
-                gamemode = action.get("gamemode")
+                gamemode = argument
                 if isinstance(gamemode, int):
                     if gamemode < 0 or gamemode > 3:
                         raise ValueError(
@@ -135,22 +127,31 @@ class Registry:
                 self.level_dat_modifications["GameType"] = nbtlib.Int(numerical_gamemode)
 
             case "explode_last_played":
-                # long max: 9_223_372_036_854_775_807
-                self.level_dat_modifications["LastPlayed"]\
-                    = nbtlib.Long(9_223_372_036_854_775_807)
+                self._must_be_bool(argument, "explode_last_played")
+                if argument:
+                    # long max: 9_223_372_036_854_775_807
+                    self.level_dat_modifications["LastPlayed"]\
+                        = nbtlib.Long(9_223_372_036_854_775_807)
 
-            case "remove_paper_garbage":
-                self._remove_datapacks_inner(["bukkit"])
-                self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
-                self.files_to_remove.append("paper-world.yml")
-
-            case "remove_vanilla_garbage":
-                self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
-                self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
+            case "remove_garbage":
+                self._must_be_dict(argument, "remove_garbage")
+                for k, e in argument.items():
+                    match k:
+                        case "paper":
+                            self._must_be_bool(e, "remove_garbage.paper")
+                            if not e: continue
+                            self._remove_datapacks_inner(["bukkit"])
+                            self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
+                            self.files_to_remove.append("paper-world.yml")
+                        case "vanilla":
+                            self._must_be_bool(e, "remove_garbage.vanilla")
+                            if not e: continue
+                            self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
+                            self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
+                        # TODO: fabric garbage
 
             case _:
-                raise ValueError(
-                    f"action type `{action_type}' is not supported!")
+                pass
 
     @classmethod
     def _must_be_string(cls, something: Any, name: str):
@@ -163,6 +164,16 @@ class Registry:
             raise ValueError(f"{name} must be a list of strings")
         if not all(map(lambda x: isinstance(x, str), something)):
             raise ValueError(f"elements of {name} must be strings")
+    
+    @classmethod
+    def _must_be_dict(cls, something: Any, name: str):
+        if not isinstance(something, dict):
+            raise ValueError(f"{name} must be a dict")
+    
+    @classmethod
+    def _must_be_bool(cls, something: Any, name: str):
+        if not isinstance(something, bool):
+            raise ValueError(f"{name} must be a boolean")
     
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]
@@ -292,7 +303,7 @@ def extract_config(raw_config: dict) -> dict:
     """Extracts only relevant fields from configuration.
     Also verifies that all required fields are present."""
     config = {}
-    for f, t in zip(["world", "output_directory", "actions"], [str, str, list]):
+    for f, t in zip(["world", "output_directory", "actions"], [str, str, dict]):
         field = raw_config.get(f)
         if field is None or not isinstance(field, t):
             raise ValueError(f"config field {f} is missing or of invalid type")
@@ -320,10 +331,10 @@ if __name__ == "__main__":
     config = extract_config(raw_config)
 
     reg = Registry()
-    for action in config["actions"]:
-        reg.register(action)
+    for action, argument in config["actions"].items():
+        reg.register_action(action, argument)
         if not args.quiet:
-            print("registered action of type `%s'" % action["type"])
+            print("registered action `%s'" % action)
 
     convert(reg, config["world"], config["output_directory"], ".mid",
             args.clean, not args.quiet)
