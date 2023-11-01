@@ -27,11 +27,11 @@ class Registry:
     ]
 
     def __init__(self):
-        self.additional_files = []
         self.world_name = None
         self.world_folder_name = None
         self.archive_name = None
         self.should_zip = False
+        self.additional_files = []
 
         self.reset_scores_of_players = []
         self.datapacks_to_remove = []
@@ -81,6 +81,10 @@ class Registry:
                     self.archive_name = archive_name
                 else:
                     self.archive_name = None
+                
+                if "add_files" in action:
+                    self._must_be_list_of_strings(action["add_files"], "add_files")
+                    self.additional_files += action["add_files"]
 
             case "set_gamerules":
                 gamerules = action.get("gamerules")
@@ -283,6 +287,13 @@ def convert(registry: Registry, world: PathLike,
     # step 6: move result to output directory
     output_directory.mkdir(parents=True, exist_ok=True)
     if registry.should_zip:
+        for path in map(lambda x: pl.Path(x), registry.additional_files):
+            if path.is_dir():
+                shutil.copytree(path, tempdir)
+            elif path.is_file():
+                shutil.copy2(path, tempdir)
+            else:
+                pass
         archive_name = _first_not_none(registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
         archive_path = output_directory / (archive_name + ".zip")
         _general_remove(pl.Path(archive_path))

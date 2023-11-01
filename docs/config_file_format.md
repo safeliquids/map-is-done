@@ -91,8 +91,12 @@ or, equivalently, only the action type
     in the configured output directory.
     
     Parameters:
-    - `"archive_name"` (optional) - name of the resulting archive (*without* the .zip
-    extension); if omitted, the archive is named the same as the world folder.
+    - `"archive_name"` (optional) - name of the resulting archive (*without*
+    the .zip extension); if omitted, the archive is named the same as the world
+    folder.
+    - `"add_files"` (optional) - list of names of files or directories, that
+    should be added to the archive. All files or directories are added to the
+    root of the archive, on the same level as the world folder.
 
 5. `"remove_player_scores"`
 
