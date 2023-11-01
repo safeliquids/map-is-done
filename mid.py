@@ -297,6 +297,12 @@ def extract_config(raw_config: dict) -> dict:
         if field is None or not isinstance(field, t):
             raise ValueError(f"config field {f} is missing or of invalid type")
         config[f] = field
+    for i, thing in enumerate(config["actions"]):
+        if isinstance(thing, dict):
+            if not "type" in thing:
+                raise ValueError("found action without a type")
+        if isinstance(thing, str):
+            config["actions"][i] = {"type": thing}
     return config
 
 
@@ -321,9 +327,7 @@ if __name__ == "__main__":
 
     reg = Registry()
     for action in config["actions"]:
-        reg.register(action)
-        if not args.quiet:
-            print("registered action of type `%s'" % action["type"])
+        reg.register_action(action)
 
     convert(reg, config["world"], config["output_directory"], ".mid",
             args.clean, not args.quiet)
