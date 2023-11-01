@@ -31,6 +31,7 @@ class Registry:
         self.world_name = None
         self.world_folder_name = None
         self.archive_name = None
+        self.should_zip = False
 
         self.reset_scores_of_players = []
         self.datapacks_to_remove = []
@@ -43,7 +44,7 @@ class Registry:
     def supports(cls, action_type: str) -> bool:
         return action_type in cls.supported_actions
 
-    def register(self, action: dict):
+    def register_action(self, action: dict):
         """registers an action in json format
         raises ValueError if the action type is unsupported or the action
         definition is invalid.
@@ -53,16 +54,19 @@ class Registry:
         actino type.
         
         Additional relevant data is stored in this object."""
-        action_type = action["type"]
-        match action_type:
+        type = action["type"]
+        match type:
             case "set_map_name":
                 world_name = action.get("world_name")
                 self._must_be_string(world_name, "world_name")
-                folder_name = action.get("folder_name")
-                self._must_be_string(folder_name, "folder_name")
-                
                 self.world_name = world_name
-                self.world_folder_name = folder_name
+                
+                if "folder_name" in action:
+                    folder_name = action.get("folder_name")
+                    self._must_be_string(folder_name, "folder_name")
+                    self.world_folder_name = folder_name
+                else:
+                    self.world_folder_name = None
 
             case "remove_datapacks":
                 names = action.get("names")
@@ -70,10 +74,13 @@ class Registry:
                 self._remove_datapacks_inner(names)
 
             case "zip":
-                archive_name = action.get("archive_name")
-                self._must_be_string(archive_name, "archive_name")
-                
-                self.archive_name = archive_name
+                self.should_zip = True
+                if "archive_name" in action:
+                    archive_name = action.get("archive_name")
+                    self._must_be_string(archive_name, "archive_name")
+                    self.archive_name = archive_name
+                else:
+                    self.archive_name = None
 
             case "set_gamerules":
                 gamerules = action.get("gamerules")
@@ -135,9 +142,13 @@ class Registry:
                 self.level_dat_modifications["GameType"] = nbtlib.Int(numerical_gamemode)
 
             case "explode_last_played":
-                # long max: 9_223_372_036_854_775_807
-                self.level_dat_modifications["LastPlayed"]\
-                    = nbtlib.Long(9_223_372_036_854_775_807)
+                if "time" in action:
+                    self._must_be_int(action["time"], "time")
+                    self.level_dat_modifications["LastPlayed"]\
+                        = nbtlib.Long(action["time"])
+                else:
+                    self.level_dat_modifications["LastPlayed"]\
+                        = nbtlib.Long(9_223_372_036_854_775_807)
 
             case "remove_paper_garbage":
                 self._remove_datapacks_inner(["bukkit"])
@@ -150,7 +161,7 @@ class Registry:
 
             case _:
                 raise ValueError(
-                    f"action type `{action_type}' is not supported!")
+                    f"action type `{type}' is not supported!")
 
     @classmethod
     def _must_be_string(cls, something: Any, name: str):
@@ -202,10 +213,8 @@ def convert(registry: Registry, world: PathLike,
     output_directory = pl.Path(output_directory)
     tempdir = pl.Path(temp_directory, str(time.time_ns()))
 
-    ARCHIVE_NAME = _first_not_none(registry.archive_name, original_world.name)
-    ARCHIVE_FILENAME = ARCHIVE_NAME + ".zip"
-
-    NEW_WORLD_DIRECTORY_NAME = _first_not_none(registry.world_folder_name, original_world.name)
+    NEW_WORLD_DIRECTORY_NAME = _first_not_none(
+        registry.world_folder_name, original_world.name)
 
     # step 1: copy to temp directory
     WORKING_WORLD = tempdir / NEW_WORLD_DIRECTORY_NAME
@@ -268,12 +277,13 @@ def convert(registry: Registry, world: PathLike,
 
     # step 6: move result to output directory
     output_directory.mkdir(parents=True, exist_ok=True)
-    if registry.archive_name is not None:
-        archive_path = output_directory / ARCHIVE_FILENAME
+    if registry.should_zip:
+        archive_name = _first_not_none(registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
+        archive_path = output_directory / (archive_name + ".zip")
         _general_remove(pl.Path(archive_path))
         shutil.make_archive(
-            (output_directory/ARCHIVE_NAME).as_posix(), "zip",
-            tempdir, NEW_WORLD_DIRECTORY_NAME)
+            (output_directory/archive_name).as_posix(), "zip",
+            tempdir, ".")
         if verbose:
             print("zipped working world at '%s', archive is '%s'"
                     % (WORKING_WORLD, archive_path))
