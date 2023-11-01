@@ -289,11 +289,16 @@ def convert(registry: Registry, world: PathLike,
     if registry.should_zip:
         for path in map(lambda x: pl.Path(x), registry.additional_files):
             if path.is_dir():
-                shutil.copytree(path, tempdir)
+                shutil.copytree(path, tempdir / path.name, dirs_exist_ok=True)
             elif path.is_file():
                 shutil.copy2(path, tempdir)
+            elif path.exists():
+                if verbose:
+                    print("only files or directories can be added to archive, found `%s`")
             else:
-                pass
+                if verbose:
+                    print("cannot add `%s` to archive, not found")
+
         archive_name = _first_not_none(registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
         archive_path = output_directory / (archive_name + ".zip")
         _general_remove(pl.Path(archive_path))
