@@ -164,3 +164,10 @@ or, equivalently, only the action type
     that are irrelevant to the finished map. That includes
     - `level.dat_old`, `session.lock`, `uid.dat` files
     - `ServerBrands` field in `level.dat`
+
+12. `"remove_fabric_garbage"`
+
+    Performs various cleanup of information that Fabric uses but is irrelevant
+    to the finished map. That includes
+    - `data/fabricRegistry.dat`, `data/fabricRegistry.dat.1`, `data/fabricRegistry.dat.2` files
+    - remove the `fabric` datapack

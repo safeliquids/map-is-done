@@ -24,6 +24,7 @@ class Registry:
         "explode_last_played",
         "remove_paper_garbage",
         "remove_vanilla_garbage"
+        "remove_fabric_garbage"
     ]
 
     def __init__(self):
@@ -162,6 +163,13 @@ class Registry:
             case "remove_vanilla_garbage":
                 self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
                 self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
+            
+            case "remove_fabric_garbage":
+                self.files_to_remove += [
+                    "data/fabricRegistry.dat",
+                    "data/fabricRegistry.dat.1",
+                    "data/fabricRegistry.dat.2" ]
+                self.datapacks_to_remove .append("fabric")
 
             case _:
                 raise ValueError(
