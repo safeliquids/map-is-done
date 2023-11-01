@@ -143,7 +143,7 @@ class Registry:
 
             case "explode_last_played":
                 if "time" in action:
-                    self._must_be_int(action["time"], "time")
+                    self._must_be_integer(action["time"], "time")
                     self.level_dat_modifications["LastPlayed"]\
                         = nbtlib.Long(action["time"])
                 else:
@@ -175,6 +175,11 @@ class Registry:
         if not all(map(lambda x: isinstance(x, str), something)):
             raise ValueError(f"elements of {name} must be strings")
     
+    @classmethod
+    def _must_be_integer(cls, something: Any, name: str):
+        if not isinstance(something, int):
+            raise ValueError(f"{name} must be an integer")
+
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]
         self.files_to_remove += ["datapacks/" + n for n in names]
