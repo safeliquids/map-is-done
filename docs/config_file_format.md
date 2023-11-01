@@ -65,7 +65,7 @@ or, equivalently, only the action type
     Parameters:
     - `"world_name"` - the new world name
     - `"folder_name"` (optionnal) - the new world folder name; if omitted,
-    `"world_name"` is used
+    the original world directory name is used.
     
 2. `"remove_datapacks"`
 
