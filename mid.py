@@ -272,7 +272,7 @@ def convert(registry: Registry, world: PathLike,
             for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
                 if pack_name in yeeting_packs:
                     if verbose:
-                        print("datapack '%s' will be removed from level.dat, it was %"
+                        print("datapack '%s' will be removed from level.dat, it was %s"
                               % (pack_name, state))
                     yeeting_pack_indices[state].append(i)
             for index in reversed(yeeting_pack_indices[state]):
