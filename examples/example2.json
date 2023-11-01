@@ -2,14 +2,11 @@
     "world":"abcd",
     "output_directory":"efgh",
     "actions":[
+        "remove_player_data",
+        "remove_paper_garbage",
         {
             "type":"remove_player_scores",
-            "player":"safeliquids"
-        },
-        {
-            "type":"remove_player_data",
-            "note": "this type has not parameters,",
-            "notee":"it deletes all data of all players"
+            "players":["daniel", "cooler_daniel_11"]
         },
         {
             "type":"set_difficulty",
@@ -21,8 +18,12 @@
         },
         {
             "type":"explode_last_played",
-            "note": "Sets the LastPlayed property in level.dat to a very high number.",
-            "notee":"This action also does not have parameters."
+            "notes":[
+                "Sets the LastPlayed property in level.dat to a very high number.",
+                "This action does have an optional parameter which is omitted.",
+                "So it could also be given as just the acition type.",
+                "(also, this extra field \"notes\" is ignored.)"
+            ]
         }
     ]
 }

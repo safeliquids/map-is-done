@@ -3,6 +3,7 @@
     "world":"path/to/world",
     "output_directory":"path/to/output/directory/",
     "actions":[
+        "remove_player_data",
         {
             "type":"set_map_name",
             "world_name":"An Example Map!",
