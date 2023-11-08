@@ -186,3 +186,19 @@ or, equivalently, only the action type
     - `"forever"` (optional) - If true, disables advancing in-game time. If
     false, forcefully enables it. If omitted, the daylight cycle is left
     unchanged.
+
+14. `"set_weather"`
+
+    Sets the world's weather, optionally forever or with a timer.
+    Similarly to `"set_time"`, setting the duration changes the
+    `"doWeatherCycle"` gamerule. If you also set this gamerule directly using
+    the `"set_gamerules"` action it is undefined what happens, therefore it is
+    recommended to enable or disable the weather cycle using `"set_weater"`
+    aciton.
+
+    Parameters:
+    - `"weather"` - weather type; must be a string one of `"clear"`, `"rain"`
+    or `"thunder"`
+    - `"duration"` (optional) - `"forever"` or number of ticks this weather
+    should remain for. Default is `"forever"`.
+    
