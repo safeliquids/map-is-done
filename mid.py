@@ -1,5 +1,6 @@
 import argparse as ap
 import json
+import logging
 from os import PathLike
 import pathlib as pl
 import shutil
@@ -90,11 +91,12 @@ class Registry:
             case "set_gamerules":
                 gamerules = action.get("gamerules")
                 if not isinstance(gamerules, dict):
-                    raise ValueError(f"expected a compound of gamerules")
+                    msg = "expected a compound of gamerules"
+                    raise ValueError(msg)
                 for rule, value in gamerules.items():
                     if not isinstance(rule, str) or not isinstance(value, str):
-                        raise ValueError(
-                            f"gamerules and their values must be strings")
+                        msg = "gamerules and their values must be strings"
+                        raise ValueError(msg)
                 gamerules_as_nbt_strings = dict(
                     map(lambda it:(it[0],nbtlib.String(it[1])), gamerules.items()))
                 if "GameRules" not in self.level_dat_modifications:
@@ -150,25 +152,29 @@ class Registry:
                 self.datapacks_to_remove .append("fabric")
 
             case _:
-                raise ValueError(
-                    f"action type `{type}' is not supported!")
+                msg = f"action type `{type}' is not supported!"
+                logging.error(msg)
+                raise ValueError(msg)
+        logging.info("registered action %s" % str(action))
 
     @classmethod
+    def _must_be_type(cls, something: Any, type: Any, fail_str: str | None = None):
+        if not isinstance(something, type):
+            raise ValueError(fail_str) if fail_str is not None else ValueError()
+        
+    @classmethod
     def _must_be_string(cls, something: Any, name: str):
-        if not isinstance(something, str):
-            raise ValueError(f"{name} must be a string")
+        cls._must_be_type(something, str, f"{name} must be a string")
 
     @classmethod
     def _must_be_list_of_strings(cls, something: Any, name: str):
-        if not isinstance(something, list):
-            raise ValueError(f"{name} must be a list of strings")
-        if not all(map(lambda x: isinstance(x, str), something)):
-            raise ValueError(f"elements of {name} must be strings")
+        cls._must_be_type(something, list, f"{name} must be a list of strings")
+        for x in something:
+            cls._must_be_type(x, str, f"{name} must be a list of strings")
     
     @classmethod
     def _must_be_integer(cls, something: Any, name: str):
-        if not isinstance(something, int):
-            raise ValueError(f"{name} must be an integer")
+        cls._must_be_type(something, int, f"{name} must be an integer")
 
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]
@@ -217,25 +223,26 @@ def convert(registry: Registry, world: PathLike,
     NEW_WORLD_DIRECTORY_NAME = _first_not_none(
         registry.world_folder_name, original_world.name)
 
+    logging.debug("original world: '%s'" % original_world)
+    logging.debug("output dir: '%s'" % output_directory)
+    logging.debug("temp dir: '%s'" % tempdir)
+
     # step 1: copy to temp directory
     WORKING_WORLD = tempdir / NEW_WORLD_DIRECTORY_NAME
+    logging.debug("working world: '%s'" % str(WORKING_WORLD))
     WORKING_WORLD.parent.mkdir(parents=True, exist_ok=True)
     if WORKING_WORLD.exists():
         _general_remove(WORKING_WORLD)
     shutil.copytree(original_world, WORKING_WORLD, symlinks=True)
-    if verbose:
-        print("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
+    logging.info("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
 
     # step 2: removing player scores
     scoreboard_path = WORKING_WORLD / "data" / "scoreboard.dat"
     if scoreboard_path.is_file() and registry.reset_scores_of_players != []:
         with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
             for player in registry.reset_scores_of_players:
-                if verbose:
-                    print("removing scores of player '%s'" % player)
+                logging.info("removing scores of player '%s'" % player)
                 del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
-    if verbose:
-        print("deleted player data")
 
     # step 3 and 4: remove things from level.dat, then apply modifications
     with nbtlib.load(WORKING_WORLD / "level.dat") as level_dat:
@@ -244,16 +251,13 @@ def convert(registry: Registry, world: PathLike,
         # step 3: deletions
         for item in registry.level_dat_removals:
             del level_dat[data + item]
-            if verbose:
-                print("deleted '%s' from level.dat" % str(item))
+            logging.info("deleted '%s' from level.dat" % str(item))
 
         # step 4: modifications
         level_dat[data].merge(registry.level_dat_modifications)
-        if verbose:
-            print("applied modifications to level.dat")
+        logging.info("applied modifications to level.dat")
         level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
-        if verbose:
-            print("changed world name in level.dat")
+        logging.info("changed world name in level.dat")
 
         yeeting_packs = registry.datapacks_to_remove
         yeeting_pack_indices = {
@@ -263,8 +267,7 @@ def convert(registry: Registry, world: PathLike,
         for state in ["Enabled", "Disabled"]:
             for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
                 if pack_name in yeeting_packs:
-                    if verbose:
-                        print("datapack '%s' will be removed from level.dat, it was %s"
+                    logging.info("datapack '%s' will be removed from level.dat, it was %s"
                               % (pack_name, state))
                     yeeting_pack_indices[state].append(i)
             for index in reversed(yeeting_pack_indices[state]):
@@ -273,8 +276,7 @@ def convert(registry: Registry, world: PathLike,
     # step 5: remove unwanted files and directories
     for d in registry.files_to_remove:
         _general_remove(WORKING_WORLD / d)
-        if verbose:
-            print("deleted %s" % d)
+        logging.info("deleted %s" % d)
 
     # step 6: move result to output directory
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -285,11 +287,9 @@ def convert(registry: Registry, world: PathLike,
             elif path.is_file():
                 shutil.copy2(path, tempdir)
             elif path.exists():
-                if verbose:
-                    print("only files or directories can be added to archive, found `%s`")
+                logging.warn("only files or directories can be added to archive, skipping `%s`" % path)
             else:
-                if verbose:
-                    print("cannot add `%s` to archive, not found")
+                logging.error("cannot add `%s` to archive, not found" % path)
 
         archive_name = _first_not_none(registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
         archive_path = output_directory / (archive_name + ".zip")
@@ -297,18 +297,17 @@ def convert(registry: Registry, world: PathLike,
         shutil.make_archive(
             (output_directory/archive_name).as_posix(), "zip",
             tempdir, ".")
-        if verbose:
-            print("zipped working world at '%s', archive is '%s'"
+        logging.info("zipped working world at '%s', archive is '%s'"
                     % (WORKING_WORLD, archive_path))
     else:
         # move working world to output dir
         shutil.copytree(WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME, symlinks=True)
-        if verbose:
-            print("copied working world '%s' to output dir, result is '%s'"
+        logging.info("copied working world '%s' to output dir, result is '%s'"
                     % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
     
     if clean:
         _general_remove(tempdir)
+        logging.info("deleted temporary directory at '%s'" % tempdir)
         
 
 def extract_config(raw_config: dict) -> dict:
@@ -343,7 +342,13 @@ if __name__ == "__main__":
         "-q", "--quiet", action="store_true",
         help="do not print progress to console")
     args = argument_parser.parse_args()
+    
+    if args.quiet:
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
+    else:
+        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
+    logging.info("reading configuration from file '%s'" % str(args.json))
     with open(args.json, "r", encoding="utf-8") as conf_file:
         raw_config = json.load(conf_file)
     config = extract_config(raw_config)
