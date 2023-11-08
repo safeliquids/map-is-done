@@ -24,8 +24,9 @@ class Registry:
         "set_default_gamemode",
         "explode_last_played",
         "remove_paper_garbage",
-        "remove_vanilla_garbage"
-        "remove_fabric_garbage"
+        "remove_vanilla_garbage",
+        "remove_fabric_garbage",
+        "set_time"
     ]
 
     def __init__(self):
@@ -145,6 +146,19 @@ class Registry:
                     "data/fabricRegistry.dat.1",
                     "data/fabricRegistry.dat.2" ]
                 self.datapacks_to_remove .append("fabric")
+            
+            case "set_time":
+                t = action.get("time")
+                self._must_be_integer(t, "time")
+                if t < 0:
+                    raise ValueError("time must be between 0 and 23999")
+                self.level_dat_modifications["DayTime"] = nbtlib.Int(t)
+
+                if "forever" in action:
+                    f = action.get("forever")
+                    self._must_be_boolean(f, "forever")
+                    v = "true" if f else "false"
+                    self._set_gamerules_inner({"doDaylightCycle":v})
 
             case _:
                 msg = f"action type `{type}' is not supported!"
@@ -170,6 +184,10 @@ class Registry:
     @classmethod
     def _must_be_integer(cls, something: Any, name: str):
         cls._must_be_type(something, int, f"{name} must be an integer")
+    
+    @classmethod
+    def _must_be_boolean(cls, something: Any, name: str):
+        cls._must_be_type(something, bool, f"{name} must be a boolean")
 
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]

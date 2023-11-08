@@ -171,3 +171,18 @@ or, equivalently, only the action type
     to the finished map. That includes
     - `data/fabricRegistry.dat`, `data/fabricRegistry.dat.1`, `data/fabricRegistry.dat.2` files
     - remove the `fabric` datapack
+
+13. `"set_time"`
+
+    Sets the in-game time of the world, possibly enabling or disabling the
+    daylight cycle. Do note, that is done by setting the `"doDaylightCycle"`
+    gamerule. If you also set this gamerule directly using the
+    `"set_gamerules"` action it is undefined what happens. It is recommended
+    to enable or disable the daylight cycle using `"set_time"` aciton.
+
+    Parameters:
+    - `"time"` - in-game time of day in ticks. Must be integer between 0 and
+    23999, where 6000 is noon, 18000 is midnight.
+    - `"forever"` (optional) - If true, disables advancing in-game time. If
+    false, forcefully enables it. If omitted, the daylight cycle is left
+    unchanged.
