@@ -97,12 +97,7 @@ class Registry:
                     if not isinstance(rule, str) or not isinstance(value, str):
                         msg = "gamerules and their values must be strings"
                         raise ValueError(msg)
-                gamerules_as_nbt_strings = dict(
-                    map(lambda it:(it[0],nbtlib.String(it[1])), gamerules.items()))
-                if "GameRules" not in self.level_dat_modifications:
-                    self.level_dat_modifications["GameRules"] = gamerules_as_nbt_strings
-                else:
-                    self.level_dat_modifications["GameRules"] |= gamerules_as_nbt_strings
+                self._set_gamerules_inner(gamerules)
 
             case "remove_player_scores":
                 name = action.get("player")
@@ -179,6 +174,15 @@ class Registry:
     def _remove_datapacks_inner(self, names):
         self.datapacks_to_remove += ["file/" + n for n in names]
         self.files_to_remove += ["datapacks/" + n for n in names]
+    
+    def _set_gamerules_inner(self, gamerules):
+        gamerules_as_nbt_strings = dict(
+            map(lambda it: (it[0], nbtlib.String(it[1])),
+            gamerules.items()))
+        if "GameRules" not in self.level_dat_modifications:
+            self.level_dat_modifications["GameRules"] = gamerules_as_nbt_strings
+        else:
+            self.level_dat_modifications["GameRules"] |= gamerules_as_nbt_strings
 
     def _str_or_int_to_int(self, value: str | int, choices: Dict[str, int], name: str | None = None) -> int:
         """turns given value to its corresponding numeric value from a given
