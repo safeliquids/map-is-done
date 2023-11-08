@@ -4,7 +4,7 @@ from os import PathLike
 import pathlib as pl
 import shutil
 import time
-from typing import Any
+from typing import Any, Dict
 import zipfile as zf
 
 import nbtlib
@@ -115,36 +115,14 @@ class Registry:
             case "set_difficulty":
                 d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
                 difficulty = action.get("difficulty")
-                if isinstance(difficulty, int):
-                    if difficulty < 0 or difficulty > 3:
-                        raise ValueError(
-                            "difficulty must be a string or between 0 and 3 inclusive.")
-                    numerical_difficulty = difficulty
-                elif isinstance(difficulty, str):
-                    if difficulty not in d:
-                        raise ValueError(
-                            'difficulty must be a number or one of "peaceful", "easy", "normal", "hard".')
-                    numerical_difficulty = d[difficulty]
-                else:
-                    raise ValueError("difficulty must be a string or number")
-                self.level_dat_modifications["Difficulty"] = nbtlib.Int(numerical_difficulty)
+                int_difficulty = self._str_or_int_to_int(difficulty, d, "difficulty")
+                self.level_dat_modifications["Difficulty"] = nbtlib.Int(int_difficulty)
 
             case "set_default_gamemode":
                 g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
                 gamemode = action.get("gamemode")
-                if isinstance(gamemode, int):
-                    if gamemode < 0 or gamemode > 3:
-                        raise ValueError(
-                            "gamemode must be a string or between 0 and 3 inclusive.")
-                    numerical_gamemode = gamemode
-                elif isinstance(gamemode, str):
-                    if gamemode not in g:
-                        raise ValueError(
-                            "gamemode must be a number or one of 'survival', 'creative', 'adventure' and 'spectator'.")
-                    numerical_gamemode = g[gamemode]
-                else:
-                    raise ValueError("gamemode must be a string or number")
-                self.level_dat_modifications["GameType"] = nbtlib.Int(numerical_gamemode)
+                int_gamemode = self._str_or_int_to_int(gamemode, g, "gamemode")
+                self.level_dat_modifications["GameType"] = nbtlib.Int(int_gamemode)
 
             case "explode_last_played":
                 if "time" in action:
@@ -196,6 +174,24 @@ class Registry:
         self.datapacks_to_remove += ["file/" + n for n in names]
         self.files_to_remove += ["datapacks/" + n for n in names]
 
+    def _str_or_int_to_int(self, value: str | int, choices: Dict[str, int], name: str | None = None) -> int:
+        """turns given value to its corresponding numeric value from a given
+        list"""
+        if isinstance(value, int):
+            if value in choices.values():
+                return value
+            raise ValueError(
+                "unexpected numeric value: %d" % value if name is None
+                else "unexpected numeric value of '%s': %d" % (name, value))
+        elif isinstance(value, str):
+            if value in choices.keys():
+                return choices[value]
+            raise ValueError(
+                "unexpected string value: %s" % value if name is None
+                else "unexpected string value of '%s': %s" % (name, value))
+        raise ValueError(
+            "expected a number or string but found %s" % value if name is None
+            else "'%s' should be a number or string but found %s" % (name, value))
 
 def _general_remove(path: PathLike):
     """delete the file or directory pointed to by path"""
