@@ -205,18 +205,6 @@ def _general_remove(path: PathLike):
         shutil.rmtree(path)
 
 
-# this functin will be useful later
-def _add_something_to_archive(source: pl.Path, archive: zf.ZipFile, path: str):
-    if source.is_file():
-        archive.write(source, path)
-    elif source.is_dir():
-        archive.mkdir(path)
-        for child in source.iterdir():
-            _add_something_to_archive(child, archive, path + "/" + child.name)
-    else:
-        raise ValueError("cannot add %s to archive (unsupported type)" % str(source))
-
-
 def _first_not_none(*stuff):
     for s in stuff:
         if s is not None:
