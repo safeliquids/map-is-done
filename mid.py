@@ -215,7 +215,7 @@ def _first_not_none(*stuff):
 
 def convert(registry: Registry, world: PathLike,
             output_directory: PathLike, temp_directory: PathLike,
-            clean: bool, verbose: bool):
+            clean: bool):
     original_world = pl.Path(world)
     output_directory = pl.Path(output_directory)
     tempdir = pl.Path(temp_directory, str(time.time_ns()))
@@ -339,14 +339,16 @@ if __name__ == "__main__":
         "-c", "--clean", action="store_true",
         help="delete working copy after result is produced")
     argument_parser.add_argument(
-        "-q", "--quiet", action="store_true",
-        help="do not print progress to console")
+        "-q", "--quiet", action="count", default=0,
+        help="do not print information other than errors to console."
+        +" If given twice, do not print anything.")
     args = argument_parser.parse_args()
     
-    if args.quiet:
-        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
-    else:
-        logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+    match args.quiet:
+        case 0: loglevel = logging.INFO
+        case 1: loglevel = logging.ERROR
+        case _: loglevel = 1000
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=loglevel)
 
     logging.info("reading configuration from file '%s'" % str(args.json))
     with open(args.json, "r", encoding="utf-8") as conf_file:
@@ -358,4 +360,4 @@ if __name__ == "__main__":
         reg.register_action(action)
 
     convert(reg, config["world"], config["output_directory"], ".mid",
-            args.clean, not args.quiet)
+            args.clean)
