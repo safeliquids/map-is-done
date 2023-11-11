@@ -29,18 +29,15 @@ described in [the following section.](#actions) Also note that, all
 filesystem paths referenced in the config file (eg. ***"world"*** must be
 absolute or relative to the directory where the script is run from.)
 
-
-Generally, an action is given as an object containing a mandatory ***"type"*** field and possibly more fields, which depend on the action type.
-
 ## Actions
-The list may contain any number of actions, and may even be empty.
+The list may contain any number of actions and may even be empty.
 Generally, an action is given as an object containing a mandatory ***"type"***
 field and possibly more fields (ie. arguments), which depend on the action
 type. In the above example, there is one action of type ***"set_map_name"***
-and additional arguments ***"world_name"*** and ***"folder_name"***.
+that has additional arguments ***"world_name"*** and ***"folder_name"***.
 
-Some actions can be given without some of their arguments, which usually means
-a default value is used. Some actions (eg. ***"explode_last_played"***) have no
+Some actions can be given without some of their arguments which usually means
+a default value is used. Some actions (e.g. ***"explode_last_played"***) have no
 parameters at all. This can be written as an object  with only the ***"type"***
 field
 ```json
@@ -57,7 +54,7 @@ or, equivalently, only the action type
     ]
 ```
 
-### List of Action Types
+### Implemented Action Types
 1. ***"set_map_name"***
 
     Changes the world name in `level.dat` and the name of the world folder.
@@ -69,8 +66,8 @@ or, equivalently, only the action type
     
 2. ***"remove_datapacks"***
 
-    Removes specified data packs from the ***"datapacks"*** subdirectory and from
-    `"level.dat"`.
+    Removes specified data packs from the `datapacks` subdirectory and from
+    `level.dat`.
 
     Parameters:
     - ***"names": list of strings*** - names of data packs to be removed
@@ -80,7 +77,7 @@ or, equivalently, only the action type
     Changes values of game rules. 
     
     Parameters:
-    - ***"gamerules": object with string values*** - a compound holding
+    - ***"gamerules": object with string:string pairs*** - a compound holding
     a rule:value pair for each gamerule to change. Both names and values must
     be strings, however, it is not verified, that each name is an existing
     gamerule, nor is it checked if supplied values are appropriate for the
@@ -105,7 +102,7 @@ or, equivalently, only the action type
     Resets all scoreboard scores of given players.
     
     Parameters:
-    - ***"players": lsit of strings*** - names of the players whose scores
+    - ***"players": list of strings*** - names of the players whose scores
     should be reset
 
 6. ***"remove_player_data"***
