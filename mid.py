@@ -25,7 +25,8 @@ class Registry:
         "remove_paper_garbage",
         "remove_vanilla_garbage",
         "remove_fabric_garbage",
-        "set_time"
+        "set_time",
+        "set_weather"
     ]
     WEATHER_TYPES = ["clear", "rain", "thunder"]
 
@@ -60,158 +61,188 @@ class Registry:
         type = action["type"]
         match type:
             case "set_map_name":
-                world_name = action.get("world_name")
-                self._must_be_string(world_name, "world_name")
-                self.world_name = world_name
-                
-                if "folder_name" in action:
-                    folder_name = action.get("folder_name")
-                    self._must_be_string(folder_name, "folder_name")
-                    self.world_folder_name = folder_name
-                else:
-                    self.world_folder_name = None
-
+                self._register_set_map_name(action)
             case "remove_datapacks":
-                names = action.get("names")
-                self._must_be_list_of_strings(names, "names")
-                self._remove_datapacks_inner(names)
-
+                self._register_remove_datapacks(action)
             case "zip":
-                self.should_zip = True
-                if "archive_name" in action:
-                    archive_name = action.get("archive_name")
-                    self._must_be_string(archive_name, "archive_name")
-                    self.archive_name = archive_name
-                else:
-                    self.archive_name = None
-                
-                if "add_files" in action:
-                    self._must_be_list_of_strings(action["add_files"], "add_files")
-                    self.additional_files += action["add_files"]
-
+                self._register_zip(action)
             case "set_gamerules":
-                gamerules = action.get("gamerules")
-                if not isinstance(gamerules, dict):
-                    msg = "expected a compound of gamerules"
-                    raise ValueError(msg)
-                for rule, value in gamerules.items():
-                    if not isinstance(rule, str) or not isinstance(value, str):
-                        msg = "gamerules and their values must be strings"
-                        raise ValueError(msg)
-                self._set_gamerules_inner(gamerules)
-
+                self._register_set_gamerules(action)
             case "remove_player_scores":
-                name = action.get("player")
-                self._must_be_string(name, "playername")
-                
-                self.reset_scores_of_players.append(name)
-
+                self._register_remove_player_scores(action)
             case "remove_player_data":
-                self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
-                self.level_dat_removals.append(nbtlib.Path("Player"))
-
+                self._register_remove_player_data(action)
             case "set_difficulty":
-                d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
-                difficulty = action.get("difficulty")
-                int_difficulty = self._str_or_int_to_int(difficulty, d, "difficulty")
-                self.level_dat_modifications["Difficulty"] = nbtlib.Int(int_difficulty)
-
+                self._register_set_difficulty(action)
             case "set_default_gamemode":
-                g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
-                gamemode = action.get("gamemode")
-                int_gamemode = self._str_or_int_to_int(gamemode, g, "gamemode")
-                self.level_dat_modifications["GameType"] = nbtlib.Int(int_gamemode)
-
+                self._register_set_default_gamemode(action)
             case "explode_last_played":
-                if "time" in action:
-                    self._must_be_integer(action["time"], "time")
-                    self.level_dat_modifications["LastPlayed"]\
-                        = nbtlib.Long(action["time"])
-                else:
-                    self.level_dat_modifications["LastPlayed"]\
-                        = nbtlib.Long(9_223_372_036_854_775_807)
-
+                self._register_explode_last_played(action)
             case "remove_paper_garbage":
-                self._remove_datapacks_inner(["bukkit"])
-                self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
-                self.files_to_remove.append("paper-world.yml")
-
+                self._register_remove_paper_garbage(action)
             case "remove_vanilla_garbage":
-                self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
-                self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
-            
+                self._register_remove_vanilla_garbage(action)
             case "remove_fabric_garbage":
-                self.files_to_remove += [
-                    "data/fabricRegistry.dat",
-                    "data/fabricRegistry.dat.1",
-                    "data/fabricRegistry.dat.2" ]
-                self.datapacks_to_remove .append("fabric")
-            
+                self._register_remove_fabric_garbage(action)
             case "set_time":
-                t = action.get("time")
-                self._must_be_integer(t, "time")
-                if t < 0:
-                    raise ValueError("time must be between 0 and 23999")
-                self.level_dat_modifications["DayTime"] = nbtlib.Int(t)
-
-                if "forever" in action:
-                    f = action.get("forever")
-                    self._must_be_boolean(f, "forever")
-                    v = "true" if f else "false"
-                    self._set_gamerules_inner({"doDaylightCycle":v})
-            
+                self._register_set_time(action)
             case "set_weather":
-                forever = False
-                duration = action.get("duration", "forever")
-                if isinstance(duration, int) and duration > 0:
-                    forever = False
-                    self._set_gamerules_inner({"doWeatherCycle":"true"})
-                elif duration == "forever":
-                    forever = True
-                    self._set_gamerules_inner({"doWeatherCycle":"false"})
-                else:
-                    raise ValueError("duration must be a positive integer or string literal 'forever'")
-                w = action.get("weather")
-                # some explanation of the weather times:
-                # the combinatin of raining and trhundering flags dictates the
-                # actual weather:
-                # - raining:0, thundering:0 -> clear
-                # - raining:1, thundering:0 -> rain
-                # - raining:1, thundering:1 -> thunder
-                # - raining:0, thundering:1 -> clear
-                # 
-                # observations: 
-                # - if clearWeatherTime is 0, rainTime and thunderTime always
-                # tick down
-                # - if clearWeatherTime is set, raining and thundering flags
-                # are cleared, rainTime and thunderTime are set to 1
-                # - if raining is set and thundering is not set, thunderTime
-                # can still be > 0. When it reaches 0, it is set to a random
-                # value and the thundering flag is set.
-                self.level_dat_modifications["raining"] = nbtlib.Byte(0)
-                self.level_dat_modifications["thundering"] = nbtlib.Byte(0)
-                self.level_dat_modifications["rainTime"] = nbtlib.Int(1)
-                self.level_dat_modifications["thunderTime"] = nbtlib.Int(1)
-                self.level_dat_modifications["clearWeatherTime"] = nbtlib.Int(0)
-                match w:
-                    case "clear":
-                        self.level_dat_modifications["clearWeatherTime"] \
-                            = nbtlib.Int(1 if forever else duration)
-                    case "thunder" | "rain":
-                        self.level_dat_modifications["raining"] = nbtlib.Byte(1)
-                        if w == "thunder":
-                            self.level_dat_modifications["thundering"] = nbtlib.Byte(1)
-                        if not forever:
-                            self.level_dat_modifications["thunderTime"] = nbtlib.Int(duration)
-                            self.level_dat_modifications["rainTime"] = nbtlib.Int(duration)
-                    case _:
-                        raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
-
+                self._register_set_weather(action)
             case _:
                 msg = f"action type `{type}' is not supported!"
                 logging.error(msg)
                 raise ValueError(msg)
         logging.info("registered action %s" % str(action))
+
+    def _register_set_map_name(self, action: dict):
+        world_name = action.get("world_name")
+        self._must_be_string(world_name, "world_name")
+        self.world_name = world_name
+        
+        if "folder_name" in action:
+            folder_name = action.get("folder_name")
+            self._must_be_string(folder_name, "folder_name")
+            self.world_folder_name = folder_name
+        else:
+            self.world_folder_name = None
+        
+    def _register_remove_datapacks(self, action: dict):
+        names = action.get("names")
+        self._must_be_list_of_strings(names, "names")
+        self._remove_datapacks_inner(names)
+        
+    def _register_zip(self, action: dict):
+        self.should_zip = True
+        if "archive_name" in action:
+            archive_name = action.get("archive_name")
+            self._must_be_string(archive_name, "archive_name")
+            self.archive_name = archive_name
+        else:
+            self.archive_name = None
+        
+        if "add_files" in action:
+            self._must_be_list_of_strings(action["add_files"], "add_files")
+            self.additional_files += action["add_files"]
+        
+    def _register_set_gamerules(self, action: dict):
+        gamerules = action.get("gamerules")
+        if not isinstance(gamerules, dict):
+            msg = "expected a compound of gamerules"
+            raise ValueError(msg)
+        for rule, value in gamerules.items():
+            if not isinstance(rule, str) or not isinstance(value, str):
+                msg = "gamerules and their values must be strings"
+                raise ValueError(msg)
+        self._set_gamerules_inner(gamerules)
+        
+    def _register_remove_player_scores(self, action: dict):
+        name = action.get("player")
+        self._must_be_string(name, "playername")
+        
+        self.reset_scores_of_players.append(name)
+        
+    def _register_remove_player_data(self, action: dict):
+        self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
+        self.level_dat_removals.append(nbtlib.Path("Player"))
+        
+    def _register_set_difficulty(self, action: dict):
+                d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
+                difficulty = action.get("difficulty")
+                int_difficulty = self._str_or_int_to_int(difficulty, d, "difficulty")
+                self.level_dat_modifications["Difficulty"] = nbtlib.Int(int_difficulty)
+        
+    def _register_set_default_gamemode(self, action: dict):
+        g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
+        gamemode = action.get("gamemode")
+        int_gamemode = self._str_or_int_to_int(gamemode, g, "gamemode")
+        self.level_dat_modifications["GameType"] = nbtlib.Int(int_gamemode)
+        
+    def _register_explode_last_played(self, action: dict):
+        if "time" in action:
+            self._must_be_integer(action["time"], "time")
+            self.level_dat_modifications["LastPlayed"]\
+                = nbtlib.Long(action["time"])
+        else:
+            self.level_dat_modifications["LastPlayed"]\
+                = nbtlib.Long(9_223_372_036_854_775_807)
+    
+    def _register_remove_paper_garbage(self, action: dict):
+        self._remove_datapacks_inner(["bukkit"])
+        self.level_dat_removals.append(nbtlib.Path('"Bukkit.Version"'))
+        self.files_to_remove.append("paper-world.yml")
+    
+    def _register_remove_vanilla_garbage(self, action: dict):
+        self.files_to_remove += ["session.lock", "uid.dat", "level.dat_old"]
+        self.level_dat_removals.append(nbtlib.Path("ServerBrands"))
+    
+    def _register_remove_fabric_garbage(self, action: dict):
+        self.files_to_remove += [
+            "data/fabricRegistry.dat",
+            "data/fabricRegistry.dat.1",
+            "data/fabricRegistry.dat.2" ]
+        self.datapacks_to_remove .append("fabric")
+        raise NotImplementedError("registering remove_fabric_garbage is not implemented")
+    
+    def _register_set_time(self, action: dict):
+        t = action.get("time")
+        self._must_be_integer(t, "time")
+        if t < 0:
+            raise ValueError("time must be between 0 and 23999")
+        self.level_dat_modifications["DayTime"] = nbtlib.Int(t)
+
+        if "forever" in action:
+            f = action.get("forever")
+            self._must_be_boolean(f, "forever")
+            v = "true" if f else "false"
+            self._set_gamerules_inner({"doDaylightCycle":v})
+
+    def _register_set_weather(self, action: dict):
+        forever = False
+        duration = action.get("duration", "forever")
+        if isinstance(duration, int) and duration > 0:
+            forever = False
+            self._set_gamerules_inner({"doWeatherCycle":"true"})
+        elif duration == "forever":
+            forever = True
+            self._set_gamerules_inner({"doWeatherCycle":"false"})
+        else:
+            raise ValueError("duration must be a positive integer or string literal 'forever'")
+        w = action.get("weather")
+        # some explanation of the weather times:
+        # the combinatin of raining and trhundering flags dictates the
+        # actual weather:
+        # - raining:0, thundering:0 -> clear
+        # - raining:1, thundering:0 -> rain
+        # - raining:1, thundering:1 -> thunder
+        # - raining:0, thundering:1 -> clear
+        # 
+        # observations: 
+        # - if clearWeatherTime is 0, rainTime and thunderTime always
+        # tick down
+        # - if clearWeatherTime is set, raining and thundering flags
+        # are cleared, rainTime and thunderTime are set to 1
+        # - if raining is set and thundering is not set, thunderTime
+        # can still be > 0. When it reaches 0, it is set to a random
+        # value and the thundering flag is set.
+        self.level_dat_modifications["raining"] = nbtlib.Byte(0)
+        self.level_dat_modifications["thundering"] = nbtlib.Byte(0)
+        self.level_dat_modifications["rainTime"] = nbtlib.Int(1)
+        self.level_dat_modifications["thunderTime"] = nbtlib.Int(1)
+        self.level_dat_modifications["clearWeatherTime"] = nbtlib.Int(0)
+        match w:
+            case "clear":
+                self.level_dat_modifications["clearWeatherTime"] \
+                    = nbtlib.Int(1 if forever else duration)
+            case "thunder" | "rain":
+                self.level_dat_modifications["raining"] = nbtlib.Byte(1)
+                if w == "thunder":
+                    self.level_dat_modifications["thundering"] = nbtlib.Byte(1)
+                if not forever:
+                    self.level_dat_modifications["thunderTime"] = nbtlib.Int(duration)
+                    self.level_dat_modifications["rainTime"] = nbtlib.Int(duration)
+            case _:
+                raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
+        
 
     @classmethod
     def _must_be_type(cls, something: Any, type: Any, fail_str: str | None = None):
