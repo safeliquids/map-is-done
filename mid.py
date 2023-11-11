@@ -6,7 +6,6 @@ import pathlib as pl
 import shutil
 import time
 from typing import Any, Dict
-import zipfile as zf
 
 import nbtlib
 
