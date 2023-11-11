@@ -200,5 +200,6 @@ or, equivalently, only the action type
     - `"weather"` - weather type; must be a string one of `"clear"`, `"rain"`
     or `"thunder"`
     - `"duration"` (optional) - `"forever"` or number of ticks this weather
-    should remain for. Default is `"forever"`.
+    should remain for. Default is `"forever"`. If a number is given, it must
+    be positive.
     
