@@ -48,7 +48,7 @@ produced.
 
 Full usage:
 ```console
-> python mid --help
+> python mid.py -h
 usage: mid.py [-h] --json <path/to/config.json> [-c] [-q]
 
 options:
@@ -56,7 +56,8 @@ options:
   --json <path/to/config.json>
                         use this configuration file in json format
   -c, --clean           delete working copy after result is produced
-  -q, --quiet           do not print progress to console
+  -q, --quiet           do not print information other than errors to console.
+                        If given twice, do not print anything.
 ```
 
 ## Config file format
