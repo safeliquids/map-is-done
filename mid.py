@@ -202,11 +202,12 @@ class Registry:
         # - if raining is set and thundering is not set, thunderTime
         # can still be > 0. When it reaches 0, it is set to a random
         # value and the thundering flag is set.
-        self.level_dat_modifications["raining"] = nbtlib.Byte(0)
-        self.level_dat_modifications["thundering"] = nbtlib.Byte(0)
-        self.level_dat_modifications["rainTime"] = nbtlib.Int(1)
-        self.level_dat_modifications["thunderTime"] = nbtlib.Int(1)
-        self.level_dat_modifications["clearWeatherTime"] = nbtlib.Int(0)
+        self.level_dat_modifications |= {
+            "raining": nbtlib.Byte(0),
+            "thundering": nbtlib.Byte(0),
+            "rainTime": nbtlib.Int(1),
+            "thunderTime": nbtlib.Int(1),
+            "clearWeatherTime": nbtlib.Int(0)}
         weather = action.get("weather")
         if weather not in self.WEATHER_TYPES:
             raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
@@ -218,8 +219,9 @@ class Registry:
         if weather == "thunder":
             self.level_dat_modifications["thundering"] = nbtlib.Byte(1)
         if not forever:
-            self.level_dat_modifications["thunderTime"] = nbtlib.Int(duration)
-            self.level_dat_modifications["rainTime"] = nbtlib.Int(duration)
+            self.level_dat_modifications |= {
+                "rainTime": nbtlib.Int(duration),
+                "thunderTime": nbtlib.Int(duration)}
         
     @classmethod
     def _must_be_type(cls, something: Any, type: Any, fail_str: str | None = None):
