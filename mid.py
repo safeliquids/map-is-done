@@ -13,6 +13,7 @@ import nbtlib
 class Registry:
     """registers actions and verifies, if they are supported"""
     WEATHER_TYPES = ["clear", "rain", "thunder"]
+    DIFFICULTY_VALUES = {"peaceful":0, "easy":1, "normal":2, "hard":3}
 
     def __init__(self):
         self.world_name = None
@@ -123,9 +124,9 @@ class Registry:
         self.level_dat_removals.append(nbtlib.Path("Player"))
         
     def _register_set_difficulty(self, action: dict):
-        d = {"peaceful":0, "easy":1, "normal":2, "hard":3}
         difficulty = action.get("difficulty")
-        int_difficulty = self._str_or_int_to_int(difficulty, d, "difficulty")
+        int_difficulty = self._str_or_int_to_int(
+            difficulty, self.DIFFICULTY_VALUES, "difficulty")
         self.level_dat_modifications["Difficulty"] = nbtlib.Int(int_difficulty)
         
     def _register_set_default_gamemode(self, action: dict):
