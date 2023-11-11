@@ -185,7 +185,9 @@ class Registry:
             forever = True
             self._set_gamerules_inner({"doWeatherCycle":"false"})
         else:
-            raise ValueError("duration must be a positive integer or string literal 'forever'")
+            raise ValueError(
+                "duration must be a positive integer or string"
+                + " literal 'forever'")
         # some explanation of the weather times:
         # the combinatin of raining and trhundering flags dictates the
         # actual weather:
@@ -210,7 +212,9 @@ class Registry:
             "clearWeatherTime": nbtlib.Int(0)}
         weather = action.get("weather")
         if weather not in self.WEATHER_TYPES:
-            raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
+            raise ValueError(
+                "weather must be one of '%s', '%s' or '%s'"
+                % (*self.WEATHER_TYPES, ))
         if weather == "clear":
             self.level_dat_modifications["clearWeatherTime"] \
                 = nbtlib.Int(1 if forever else duration)
@@ -224,9 +228,10 @@ class Registry:
                 "thunderTime": nbtlib.Int(duration)}
         
     @classmethod
-    def _must_be_type(cls, something: Any, type: Any, fail_str: str | None = None):
+    def _must_be_type(
+        cls, something: Any, type: Any, fail_str: str | None = None):
         if not isinstance(something, type):
-            raise ValueError(fail_str) if fail_str is not None else ValueError()
+            raise ValueError("" if fail_str is None else fail_str)
         
     @classmethod
     def _must_be_string(cls, something: Any, name: str):
@@ -259,24 +264,23 @@ class Registry:
         else:
             self.level_dat_modifications["GameRules"] |= gamerules_as_nbt_strings
 
-    def _str_or_int_to_int(self, value: str | int, choices: Dict[str, int], name: str | None = None) -> int:
+    def _str_or_int_to_int(
+            self, value: str | int,
+            choices: Dict[str, int], name: str) -> int:
         """turns given value to its corresponding numeric value from a given
         list"""
         if isinstance(value, int):
             if value in choices.values():
                 return value
             raise ValueError(
-                "unexpected numeric value: %d" % value if name is None
-                else "unexpected numeric value of '%s': %d" % (name, value))
+                "unexpected numeric value of '%s': %d" % (name, value))
         elif isinstance(value, str):
             if value in choices.keys():
                 return choices[value]
             raise ValueError(
-                "unexpected string value: %s" % value if name is None
-                else "unexpected string value of '%s': %s" % (name, value))
+                "unexpected string value of '%s': %s" % (name, value))
         raise ValueError(
-            "expected a number or string but found %s" % value if name is None
-            else "'%s' should be a number or string but found %s" % (name, value))
+            "'%s' should be a number or string but found %s" % (name, value))
 
 def _general_remove(path: PathLike):
     """delete the file or directory pointed to by path"""
@@ -313,15 +317,20 @@ def convert(registry: Registry, world: PathLike,
     if WORKING_WORLD.exists():
         _general_remove(WORKING_WORLD)
     shutil.copytree(original_world, WORKING_WORLD, symlinks=True)
-    logging.info("copied world '%s' to directory '%s', working world is '%s'" % (original_world, tempdir, WORKING_WORLD))
+    logging.info(
+        "copied world '%s' to directory '%s', working world is '%s'"
+        % (original_world, tempdir, WORKING_WORLD))
 
     # step 2: removing player scores
     scoreboard_path = WORKING_WORLD / "data" / "scoreboard.dat"
     if scoreboard_path.is_file() and registry.reset_scores_of_players != []:
-        with nbtlib.load(WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
+        with nbtlib.load(
+                WORKING_WORLD / "data" / "scoreboard.dat") as scoreboard:
             for player in registry.reset_scores_of_players:
                 logging.info("removing scores of player '%s'" % player)
-                del scoreboard[nbtlib.Path('"".data.PlayerScores[{Name:"%s"}]' % player)]
+                player_scores_path = nbtlib.Path(
+                    '"".data.PlayerScores[{Name:"%s"}]' % player)
+                del scoreboard[player_scores_path]
 
     # step 3 and 4: remove things from level.dat, then apply modifications
     with nbtlib.load(WORKING_WORLD / "level.dat") as level_dat:
@@ -335,7 +344,8 @@ def convert(registry: Registry, world: PathLike,
         # step 4: modifications
         level_dat[data].merge(registry.level_dat_modifications)
         logging.info("applied modifications to level.dat")
-        level_dat[data + nbtlib.Path("LevelName")] = nbtlib.String(registry.world_name)
+        level_dat[data + nbtlib.Path("LevelName")] \
+            = nbtlib.String(registry.world_name)
         logging.info("changed world name in level.dat")
 
         yeeting_packs = registry.datapacks_to_remove
@@ -344,13 +354,16 @@ def convert(registry: Registry, world: PathLike,
             "Disabled":[]
         }
         for state in ["Enabled", "Disabled"]:
-            for i, pack_name in enumerate(level_dat[data + nbtlib.Path('DataPacks.%s' % state)]):
+            state_path = data + nbtlib.Path('DataPacks.%s' % state)
+            for i, pack_name in enumerate(level_dat[state_path]):
                 if pack_name in yeeting_packs:
-                    logging.info("datapack '%s' will be removed from level.dat, it was %s"
-                              % (pack_name, state))
                     yeeting_pack_indices[state].append(i)
+                    logging.info(
+                        ("datapack '%s' will be removed from level.dat,"
+                         + " it was %s") % (pack_name, state))
             for index in reversed(yeeting_pack_indices[state]):
-                del level_dat[data + nbtlib.Path('DataPacks.%s[%d]' % (state, index))]
+                pack_path = nbtlib.Path('DataPacks.%s[%d]' % (state, index))
+                del level_dat[data + pack_path]
 
     # step 5: remove unwanted files and directories
     for d in registry.files_to_remove:
@@ -366,23 +379,30 @@ def convert(registry: Registry, world: PathLike,
             elif path.is_file():
                 shutil.copy2(path, tempdir)
             elif path.exists():
-                logging.warn("only files or directories can be added to archive, skipping `%s`" % path)
+                logging.warn(
+                    "only files or directories can be added to archive,"
+                    + " skipping `%s`" % path)
             else:
                 logging.error("cannot add `%s` to archive, not found" % path)
 
-        archive_name = _first_not_none(registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
+        archive_name = _first_not_none(
+            registry.archive_name, NEW_WORLD_DIRECTORY_NAME)
         archive_path = output_directory / (archive_name + ".zip")
         _general_remove(pl.Path(archive_path))
         shutil.make_archive(
             (output_directory/archive_name).as_posix(), "zip",
             tempdir, ".")
-        logging.info("zipped working world at '%s', archive is '%s'"
-                    % (WORKING_WORLD, archive_path))
+        logging.info(
+            "zipped working world at '%s', archive is '%s'"
+            % (WORKING_WORLD, archive_path))
     else:
         # move working world to output dir
-        shutil.copytree(WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME, symlinks=True)
-        logging.info("copied working world '%s' to output dir, result is '%s'"
-                    % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
+        shutil.copytree(
+            WORKING_WORLD, output_directory / NEW_WORLD_DIRECTORY_NAME,
+            symlinks=True)
+        logging.info(
+            "copied working world '%s' to output dir, result is '%s'"
+            % (WORKING_WORLD, output_directory/NEW_WORLD_DIRECTORY_NAME))
     
     if clean:
         _general_remove(tempdir)
@@ -409,7 +429,8 @@ def extract_config(raw_config: dict) -> dict:
 
 if __name__ == "__main__":
     argument_parser = ap.ArgumentParser(
-        description="A data-driven tool for getting Minecraft maps ready for release.")
+        description="A data-driven tool for getting Minecraft maps" \
+                    + " ready for release.")
     argument_parser.add_argument(
         "--json", action="store", type=str, required=True,
         metavar="<path/to/config.json>",
