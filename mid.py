@@ -14,6 +14,7 @@ class Registry:
     """registers actions and verifies, if they are supported"""
     WEATHER_TYPES = ["clear", "rain", "thunder"]
     DIFFICULTY_VALUES = {"peaceful":0, "easy":1, "normal":2, "hard":3}
+    GAMEMODE_VALUES = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
 
     def __init__(self):
         self.world_name = None
@@ -130,9 +131,9 @@ class Registry:
         self.level_dat_modifications["Difficulty"] = nbtlib.Int(int_difficulty)
         
     def _register_set_default_gamemode(self, action: dict):
-        g = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
         gamemode = action.get("gamemode")
-        int_gamemode = self._str_or_int_to_int(gamemode, g, "gamemode")
+        int_gamemode = self._str_or_int_to_int(
+            gamemode, self.GAMEMODE_VALUES, "gamemode")
         self.level_dat_modifications["GameType"] = nbtlib.Int(int_gamemode)
         
     def _register_explode_last_played(self, action: dict):
