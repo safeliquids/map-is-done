@@ -15,6 +15,7 @@ class Registry:
     WEATHER_TYPES = ["clear", "rain", "thunder"]
     DIFFICULTY_VALUES = {"peaceful":0, "easy":1, "normal":2, "hard":3}
     GAMEMODE_VALUES = {"survival":0, "cretive":1, "adventure":2, "spectator":3}
+    LONG_MAX = 9_223_372_036_854_775_807
 
     def __init__(self):
         self.world_name = None
@@ -139,7 +140,7 @@ class Registry:
     def _register_explode_last_played(self, action: dict):
         if "time" not in action:
             self.level_dat_modifications["LastPlayed"]\
-                = nbtlib.Long(9_223_372_036_854_775_807)
+                = nbtlib.Long(self.LONG_MAX)
             return    
         self._must_be_integer(action["time"], "time")
         self.level_dat_modifications["LastPlayed"]\
