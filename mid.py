@@ -12,22 +12,6 @@ import nbtlib
 
 class Registry:
     """registers actions and verifies, if they are supported"""
-    supported_actions = [
-        "set_map_name",
-        "remove_datapacks",
-        "zip",
-        "set_gamerules",
-        "remove_player_scores",
-        "remove_player_data",
-        "set_difficulty",
-        "set_default_gamemode",
-        "explode_last_played",
-        "remove_paper_garbage",
-        "remove_vanilla_garbage",
-        "remove_fabric_garbage",
-        "set_time",
-        "set_weather"
-    ]
     WEATHER_TYPES = ["clear", "rain", "thunder"]
 
     def __init__(self):
@@ -43,10 +27,6 @@ class Registry:
         self.level_dat_removals = []
         
         self.files_to_remove = []
-
-    @classmethod
-    def supports(cls, action_type: str) -> bool:
-        return action_type in cls.supported_actions
 
     def register_action(self, action: dict):
         """registers an action in json format
@@ -225,12 +205,12 @@ class Registry:
         self.level_dat_modifications["thunderTime"] = nbtlib.Int(1)
         self.level_dat_modifications["clearWeatherTime"] = nbtlib.Int(0)
         weather = action.get("weather")
+        if weather not in self.WEATHER_TYPES:
+            raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
         if weather == "clear":
             self.level_dat_modifications["clearWeatherTime"] \
                 = nbtlib.Int(1 if forever else duration)
             return
-        if weather not in ["rain", "thunder"]:
-            raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
         self.level_dat_modifications["raining"] = nbtlib.Byte(1)
         if weather == "thunder":
             self.level_dat_modifications["thundering"] = nbtlib.Byte(1)
