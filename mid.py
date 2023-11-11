@@ -28,6 +28,7 @@ class Registry:
         "remove_fabric_garbage",
         "set_time"
     ]
+    WEATHER_TYPES = ["clear", "rain", "thunder"]
 
     def __init__(self):
         self.world_name = None
@@ -159,6 +160,53 @@ class Registry:
                     self._must_be_boolean(f, "forever")
                     v = "true" if f else "false"
                     self._set_gamerules_inner({"doDaylightCycle":v})
+            
+            case "set_weather":
+                forever = False
+                duration = action.get("duration", "forever")
+                if isinstance(duration, int) and duration > 0:
+                    forever = False
+                    self._set_gamerules_inner({"doWeatherCycle":"true"})
+                elif duration == "forever":
+                    forever = True
+                    self._set_gamerules_inner({"doWeatherCycle":"false"})
+                else:
+                    raise ValueError("duration must be a positive integer or string literal 'forever'")
+                w = action.get("weather")
+                # some explanation of the weather times:
+                # the combinatin of raining and trhundering flags dictates the
+                # actual weather:
+                # - raining:0, thundering:0 -> clear
+                # - raining:1, thundering:0 -> rain
+                # - raining:1, thundering:1 -> thunder
+                # - raining:0, thundering:1 -> clear
+                # 
+                # observations: 
+                # - if clearWeatherTime is 0, rainTime and thunderTime always
+                # tick down
+                # - if clearWeatherTime is set, raining and thundering flags
+                # are cleared, rainTime and thunderTime are set to 1
+                # - if raining is set and thundering is not set, thunderTime
+                # can still be > 0. When it reaches 0, it is set to a random
+                # value and the thundering flag is set.
+                self.level_dat_modifications["raining"] = nbtlib.Byte(0)
+                self.level_dat_modifications["thundering"] = nbtlib.Byte(0)
+                self.level_dat_modifications["rainTime"] = nbtlib.Int(1)
+                self.level_dat_modifications["thunderTime"] = nbtlib.Int(1)
+                self.level_dat_modifications["clearWeatherTime"] = nbtlib.Int(0)
+                match w:
+                    case "clear":
+                        self.level_dat_modifications["clearWeatherTime"] \
+                            = nbtlib.Int(1 if forever else duration)
+                    case "thunder" | "rain":
+                        self.level_dat_modifications["raining"] = nbtlib.Byte(1)
+                        if w == "thunder":
+                            self.level_dat_modifications["thundering"] = nbtlib.Byte(1)
+                        if not forever:
+                            self.level_dat_modifications["thunderTime"] = nbtlib.Int(duration)
+                            self.level_dat_modifications["rainTime"] = nbtlib.Int(duration)
+                    case _:
+                        raise ValueError("weather must be one of 'clear', 'rain' or 'thunder'")
 
             case _:
                 msg = f"action type `{type}' is not supported!"
