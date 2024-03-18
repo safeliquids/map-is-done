@@ -12,8 +12,10 @@ notably
 - changing several properties in `level.dat`, such as gamerules and
 - compressing the resulting world in a zip archive.
 
-Worlds in version 1.16 or newer *should* be compatible, older ones might run into
-issues. Always keep backups of your maps!
+Worlds in versions below 1.16 might run into issues. Newer ones *should* be
+compatible up to and including version 1.20.2. (Due to a change in 1.20.3
+deleting player data causes strange behaviour.) Always keep backups of your
+maps! 
 
 ## Setup
 `map-is-done` requires python 3.10 or higher. It also depends on `nbtlib` and
