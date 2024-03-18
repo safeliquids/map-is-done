@@ -117,9 +117,9 @@ class Registry:
         self._set_gamerules_inner(gamerules)
         
     def _register_remove_player_scores(self, action: dict):
-        name = action.get("player")
-        self._must_be_string(name, "playername")
-        self.reset_scores_of_players.append(name)
+        names = action.get("players")
+        self._must_be_list_of_strings(names)
+        self.reset_scores_of_players += names
         
     def _register_remove_player_data(self, action: dict):
         self.files_to_remove += ["playerdata/", "advancements/", "stats/"]
