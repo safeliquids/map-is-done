@@ -27,7 +27,7 @@
         {
             "type":"zip",
             "archive_name":"an_example_map_made_by_me",
-            "note":"archive names are given without the .zip extension"
+            "note":"archive names can be given with or without the .zip extension"
         }
     ],
     "important_list":[

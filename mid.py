@@ -101,6 +101,8 @@ class Registry:
             return
         archive_name = action.get("archive_name")
         self._must_be_string(archive_name, "archive_name")
+        if archive_name.endswith(".zip"):
+            archive_name = archive_name[:-4]
         self.archive_name = archive_name
         
         if "add_files" in action:
