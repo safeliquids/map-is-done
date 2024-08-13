@@ -96,6 +96,13 @@ class Registry:
         
     def _register_zip(self, action: dict):
         self.should_zip = True
+
+        # register additional files, if present
+        if "add_files" in action:
+            self._must_be_list_of_strings(action["add_files"], "add_files")
+            self.additional_files += action["add_files"]
+
+        # figure out the archive name
         if "archive_name" not in action:
             self.archive_name = None
             return
@@ -104,10 +111,6 @@ class Registry:
         if archive_name.endswith(".zip"):
             archive_name = archive_name[:-4]
         self.archive_name = archive_name
-        
-        if "add_files" in action:
-            self._must_be_list_of_strings(action["add_files"], "add_files")
-            self.additional_files += action["add_files"]
         
     def _register_set_gamerules(self, action: dict):
         gamerules = action.get("gamerules")
@@ -120,7 +123,7 @@ class Registry:
         
     def _register_remove_player_scores(self, action: dict):
         names = action.get("players")
-        self._must_be_list_of_strings(names)
+        self._must_be_list_of_strings(names, "player names")
         self.reset_scores_of_players += names
         
     def _register_remove_player_data(self, action: dict):

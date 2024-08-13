@@ -54,7 +54,10 @@ or, equivalently, only the action type
     ]
 ```
 
-### Implemented Action Types
+## Implemented Action Types
+
+### Naming and packaging
+
 1. ***"set_map_name"***
 
     Changes the world name in `level.dat` and the name of the world folder.
@@ -63,27 +66,8 @@ or, equivalently, only the action type
     - ***"world_name": string*** - the new world name
     - ***"folder_name": string (optional)*** - the new world folder name.
     If omitted, the original world directory name is used.
-    
-2. ***"remove_datapacks"***
 
-    Removes specified data packs from the `datapacks` subdirectory and from
-    `level.dat`.
-
-    Parameters:
-    - ***"names": list of strings*** - names of data packs to be removed
-
-3. ***"set_gamerules"***
-
-    Changes values of game rules. 
-    
-    Parameters:
-    - ***"gamerules": object with string:string pairs*** - a compound holding
-    a rule:value pair for each gamerule to change. Both names and values must
-    be strings, however, it is not verified, that each name is an existing
-    gamerule, nor is it checked if supplied values are appropriate for the
-    gamerule.
-
-4. ***"zip"***
+2. ***"zip"***
 
     After all changes are done, compress the world in a zip archive and place it
     in the configured output directory.
@@ -96,6 +80,27 @@ or, equivalently, only the action type
     directories that should be added to the archive. All files or directories
     are added to the root of the archive, on the same level as the world
     folder.
+
+3. ***"explode_last_played"***
+
+    Sets the `LastPlayed` property in `level.dat` to a very high number, so that
+    the map, when installed in singleplayer, appears at the top of the world list
+    before it is loaded for the first time.
+    
+    Parameters:
+    - ***"time": integer (optional)*** - exact value to set the
+    `LastPlayed` property to. If omitted, the value 
+    `LONG_MAX = 9_223_372_036_854_775_807` is used.
+
+### Cleanup
+    
+4. ***"remove_datapacks"***
+
+    Removes specified data packs from the `datapacks` subdirectory and from
+    `level.dat`.
+
+    Parameters:
+    - ***"names": list of strings*** - names of data packs to be removed
 
 5. ***"remove_player_scores"***
 
@@ -113,22 +118,32 @@ or, equivalently, only the action type
 
     Known Issue: Starting in 1.20.3, if the `Player` property in `level.dat` in a singleplayer world is missing, it gets initialized to some default values. This means that, when opening the world the first time, the player will spawn at 0 0 0 (i.e. not at the world spawn.)
 
-7. ***"set_difficulty"***
+7. ***"remove_paper_garbage"***
 
-    Sets the world difficulty.
-    
-    Parameters:
-    - ***"difficulty": string or integer*** - the string or numeric
-    representation of the desired difficulty. Allowed values are
-        | Numeric | String   |
-        |     --: | :--      |
-        |       0 | peaceful |
-        |       1 | easy     |
-        |       2 | normal   |
-        |       3 | hard     |
-    
+    Performs various cleanup of information that Paper uses but is irrelevant
+    to the finished map. That includes
+    - `paper-world.yml`
+    - datapack `file/bukkit`
+    - remove `BukkitVersion` field in `level.dat`
 
-8. ***"set_default_gamemode"***
+8. ***"remove_vanilla_garbage"***
+
+    Performs various cleanup of information normally present in the world, but
+    that are irrelevant to the finished map. That includes
+    - `level.dat_old`, `session.lock`, `uid.dat` files
+    - `ServerBrands` field in `level.dat`
+
+9. ***"remove_fabric_garbage"***
+
+    Performs various cleanup of information that Fabric uses but is irrelevant
+    to the finished map. That includes
+    - `data/fabricRegistry.dat`, `data/fabricRegistry.dat.1`,
+    `data/fabricRegistry.dat.2` files
+    - remove the `fabric` datapack
+
+### Technical changes
+
+10. ***"set_default_gamemode"***
 
     Sets the default gamemode in `level.dat`. Newly joining players will spawn
     in this gamemode.
@@ -143,40 +158,30 @@ or, equivalently, only the action type
         |       2 | adventure |
         |       3 | spectator |
 
-9. ***"explode_last_played"***
+11. ***"set_difficulty"***
 
-    Sets the `LastPlayed` property in `level.dat` to a very high number, so that
-    the map, when installed in singleplayer, appears at the top of the world list
-    before it is loaded for the first time.
+    Sets the world difficulty.
     
     Parameters:
-    - ***"time": integer (optional)*** - exact value to set the
-    `LastPlayed` property to. If omitted, the value 
-    `LONG_MAX = 9_223_372_036_854_775_807` is used.
+    - ***"difficulty": string or integer*** - the string or numeric
+    representation of the desired difficulty. Allowed values are
+        | Numeric | String   |
+        |     --: | :--      |
+        |       0 | peaceful |
+        |       1 | easy     |
+        |       2 | normal   |
+        |       3 | hard     |
 
+12. ***"set_gamerules"***
 
-10. ***"remove_paper_garbage"***
-
-    Performs various cleanup of information that Paper uses but is irrelevant
-    to the finished map. That includes
-    - `paper-world.yml`
-    - datapack `file/bukkit`
-    - remove `BukkitVersion` field in `level.dat`
-
-11. ***"remove_vanilla_garbage"***
-
-    Performs various cleanup of information normally present in the world, but
-    that are irrelevant to the finished map. That includes
-    - `level.dat_old`, `session.lock`, `uid.dat` files
-    - `ServerBrands` field in `level.dat`
-
-12. ***"remove_fabric_garbage"***
-
-    Performs various cleanup of information that Fabric uses but is irrelevant
-    to the finished map. That includes
-    - `data/fabricRegistry.dat`, `data/fabricRegistry.dat.1`,
-    `data/fabricRegistry.dat.2` files
-    - remove the `fabric` datapack
+    Changes values of game rules. 
+    
+    Parameters:
+    - ***"gamerules": object with string:string pairs*** - a compound holding
+    a rule:value pair for each gamerule to change. Both names and values must
+    be strings, however, it is not verified, that each name is an existing
+    gamerule, nor is it checked if supplied values are appropriate for the
+    gamerule.
 
 13. ***"set_time"***
 
@@ -212,4 +217,3 @@ or, equivalently, only the action type
     of ticks this weather should remain for, or `"forever"`, which stops the
     weather cycle. Default is ***"forever"***. If a number is given, it must
     be positive.
-    
