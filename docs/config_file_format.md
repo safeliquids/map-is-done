@@ -116,7 +116,7 @@ or, equivalently, only the action type
     subdirectories, and the `Player` element of `level.dat`. The mentioned
     subdirectories are also removed, since they would contain no data.
 
-    Known Issue: Starting in 1.20.3, if the `Player` property in `level.dat` in a singleplayer world is missing, it gets initialized to some default values. This means that, when opening the world the first time, the player will spawn at 0 0 0 (i.e. not at the world spawn.)
+    Known Issue: In Minecraft versions 1.20.3 and 1.20.4, if the `Player` property in `level.dat` in a singleplayer world is missing, it gets initialized to some default values. This means that, when opening the world the first time, the player will spawn at 0 0 0 (i.e. not at the world spawn.) This no longer happens in versions 1.20.5 and newer.
 
 7. ***"remove_paper_garbage"***
 
