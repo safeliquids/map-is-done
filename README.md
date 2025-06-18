@@ -13,9 +13,8 @@ notably
 - compressing the resulting world in a zip archive.
 
 Worlds in versions below 1.16 might run into issues. Newer ones *should* be
-compatible up to and including version 1.20.2. (Due to a change in 1.20.3
-deleting player data causes strange behaviour.) Always keep backups of your
-maps! 
+compatible including 1.21+ (although the tool has not been tested beyong
+1.20.4. Sorry!) Always keep backups of your maps! 
 
 ## Setup
 `map-is-done` requires python 3.10 or higher. It also depends on `nbtlib` and
